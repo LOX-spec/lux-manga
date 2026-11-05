@@ -12,6 +12,12 @@ function renderNovelAdmin() {
         <a href="/?view=novels">افتح رف الروايات ←</a>
       </header>
       <p class="novel-admin-storage">النصوص محفوظة في متصفح هذا الجهاز. تتوفر الصور دون اتصال بعد عرضها مع اكتمال تجهيز التطبيق.</p>
+      <section class="novel-backup-panel" aria-labelledby="novel-backup-title">
+        <div><h2 id="novel-backup-title">مكتبتك، معك دائمًا</h2><p>احفظ نسخة من الروايات والفصول وإعدادات القارئ، أو انقلها إلى متصفح آخر.</p></div>
+        <div class="novel-backup-actions"><button type="button" id="novel-backup-export">تصدير نسخة احتياطية ↓</button><label class="novel-backup-file">استيراد نسخة ↑<input id="novel-backup-import" type="file" accept=".json,application/json"></label></div>
+        <div id="novel-backup-confirm" hidden><p id="novel-backup-summary"></p><p>الاستعادة تُحدّث الأعمال والفصول المطابقة وتُبقي الأعمال الأخرى.</p><button type="button" id="novel-backup-restore">استعادة هذه النسخة</button><button type="button" id="novel-backup-cancel">إلغاء</button></div>
+        <p id="novel-backup-result" role="status"></p>
+      </section>
       <div class="novel-admin-grid">
         <form id="novel-publish" class="novel-admin-panel">
           <header><span class="novel-admin-step">١</span><div><h2>الروايات</h2><p>أضف عملًا جديدًا أو عدّل بيانات رواية منشورة.</p></div></header>
@@ -43,7 +49,9 @@ function renderNovelAdmin() {
           <label>رقم الفصل<input name="number" required inputmode="decimal" dir="ltr" maxlength="16" placeholder="25.1"></label>
           <label>عنوان الفصل<input name="title" required maxlength="180" dir="auto"></label>
           <label>نص الفصل<textarea name="body" required rows="13" dir="auto" aria-describedby="chapter-image-hint"></textarea></label>
+          <p class="novel-editor-count" id="novel-editor-count" aria-live="polite">0 كلمة</p>
           <p id="chapter-image-hint">اترك سطرًا فارغًا بين الفقرات. لإضافة صورة، ضع رابطها المباشر في سطر مستقل، أو استخدم <code dir="ltr">![وصف الصورة](https://example.com/image.jpg)</code>.</p>
+          <details id="novel-chapter-preview"><summary>معاينة الفصل قبل النشر</summary><article id="novel-chapter-preview-body"></article></details>
           <button type="submit" class="primary">نشر الفصل</button>
           <p class="novel-admin-result" role="status"></p>
         </form>
@@ -54,6 +62,79 @@ function renderNovelAdmin() {
   const select = chapterForm.elements.bookId;
   const novelSelect = novelForm.elements.id;
   const chapterSelect = chapterForm.elements.savedChapter;
+  let pendingBackup;
+  const backupResult = page.querySelector('#novel-backup-result');
+  const backupConfirm = page.querySelector('#novel-backup-confirm');
+  page.querySelector('#novel-backup-export').addEventListener('click', () => {
+    try {
+      const data = JSON.stringify(LuxNovelPublications.backup(), null, 2);
+      const url = URL.createObjectURL(new Blob([data], { type: 'application/json' }));
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'lux-novels-' + new Date().toISOString().slice(0, 10) + '.json';
+      link.click();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      backupResult.textContent = 'جُهّزت النسخة الاحتياطية للتنزيل.';
+    } catch { backupResult.textContent = 'تعذّر تصدير النسخة. تحقّق من إذن التخزين في المتصفح.'; }
+  });
+  page.querySelector('#novel-backup-import').addEventListener('change', async event => {
+    pendingBackup = undefined;
+    backupConfirm.hidden = true;
+    const file = event.target.files[0];
+    if (!file) return;
+    try {
+      if (file.size > 5 * 1024 * 1024) throw new Error('حجم ملف النسخة يتجاوز 5 ميغابايت.');
+      const data = JSON.parse(await file.text(), (key, value) => {
+        if (['__proto__', 'constructor', 'prototype'].includes(key)) throw new Error('حقول غير صالحة في النسخة.');
+        return value;
+      });
+      if (data.format !== 'lux-novels' || data.version !== 1 || !Array.isArray(data.books)) throw new Error('اختر نسخة لوكس احتياطية صالحة.');
+      pendingBackup = data;
+      page.querySelector('#novel-backup-summary').textContent = 'تحتوي النسخة على ' + data.books.length + ' روايات.';
+      backupConfirm.hidden = false;
+      backupResult.textContent = '';
+    } catch (error) { backupResult.textContent = error.message; }
+    event.target.value = '';
+  });
+  page.querySelector('#novel-backup-cancel').addEventListener('click', () => { pendingBackup = undefined; backupConfirm.hidden = true; });
+  page.querySelector('#novel-backup-restore').addEventListener('click', async event => {
+    if (!pendingBackup) return;
+    event.target.disabled = true;
+    try {
+      const total = await LuxNovelPublications.restoreBackup(pendingBackup);
+      pendingBackup = undefined;
+      backupConfirm.hidden = true;
+      backupResult.textContent = 'اكتملت استعادة ' + total + ' روايات وفصولها.';
+      updateBooks();
+    } catch (error) { backupResult.textContent = error.message; }
+    finally { event.target.disabled = false; }
+  });
+  const preview = page.querySelector('#novel-chapter-preview');
+  function updatePreview() {
+    const body = chapterForm.elements.body.value;
+    const words = body.match(/\S+/g)?.length || 0;
+    page.querySelector('#novel-editor-count').textContent = count.format(words) + ' كلمة · ' + count.format(body.length) + ' حرف';
+    if (!preview.open) return;
+    const mount = page.querySelector('#novel-chapter-preview-body');
+    try {
+      const content = LuxNovelPublications.previewContent(body).map(block => {
+        if (!block.image) {
+          const paragraph = document.createElement('p');
+          paragraph.textContent = block.text;
+          return paragraph;
+        }
+        const image = document.createElement('img');
+        image.src = block.image;
+        image.alt = block.alt;
+        image.loading = 'lazy';
+        image.referrerPolicy = 'no-referrer';
+        return image;
+      });
+      mount.replaceChildren(...content);
+    } catch (error) { mount.textContent = error.message; }
+  }
+  chapterForm.elements.body.addEventListener('input', updatePreview);
+  preview.addEventListener('toggle', updatePreview);
 
   function updateChapters() {
     const selected = chapterSelect.value;
@@ -97,6 +178,7 @@ function renderNovelAdmin() {
     chapterForm.elements.number.readOnly = false;
     chapterForm.querySelector('[type="submit"]').textContent = 'نشر الفصل';
     chapterForm.querySelector('[role="status"]').replaceChildren();
+    updatePreview();
   }
   select.addEventListener('change', () => { newChapter(); updateChapters(); });
   chapterSelect.addEventListener('change', () => {
@@ -111,6 +193,7 @@ function renderNovelAdmin() {
     chapterForm.elements.number.readOnly = true;
     chapterForm.querySelector('[type="submit"]').textContent = 'حفظ تعديلات الفصل';
     chapterForm.querySelector('[role="status"]').replaceChildren();
+    updatePreview();
   });
 
   function bind(form, publish) {

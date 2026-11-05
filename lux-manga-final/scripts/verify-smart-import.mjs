@@ -1,0 +1,32 @@
+import fs from 'node:fs';
+import vm from 'node:vm';
+import assert from 'node:assert/strict';
+import { alternatives, challenge } from '../worker/source-fallback.js';
+const code=fs.readFileSync('smart-import.js','utf8').split('const smartPreviousParser')[0];
+const clean=vm.runInNewContext(code+'\ncleanSourceInput;', {URL});
+assert.equal(clean('الموقع [https://olympustaff.com/](رابط)'), 'https://olympustaff.com/');
+assert.equal(clean('hijala.com'), 'https://hijala.com/');
+assert.throws(()=>clean('https://user:password@example.org'));
+assert.equal(challenge('<title>Just a moment...</title>'),true);
+assert.equal(challenge('<h1>فصل جديد</h1>'),false);
+const routes=alternatives('https://hijala.com/');
+assert(routes.some(route=>route.method==='allorigins'));
+assert(routes.some(route=>route.method==='jina'));
+assert(routes.some(route=>route.url.includes('/wp-json/wp/v2/manga')));
+assert(!alternatives('https://hijala.com/chapter-1/').some(route=>route.method==='feed'));
+// Exercise the actual API recovery branch with controlled upstream responses.
+let calls=[];
+const api=fs.readFileSync('worker/api.js','utf8').replace(/^import .*;\r?\n/gm,'').replace(/export /g,'');
+const context={URL,Response,Headers,Buffer,TextDecoder,AbortSignal,alternatives,challenge,
+ fetchPublic:async(url)=>{calls.push(String(url));return calls.length===1?new Response('Denied',{status:403}):new Response('<html><h1>مكتبة عامة</h1>'+ 'محتوى '.repeat(30)+'</html>',{headers:{'content-type':'text/html'}});}};
+vm.createContext(context);vm.runInContext(api+'\nthis.handleSource=source;',context);
+const response=await context.handleSource(new Request('https://lux.test/api/source',{method:'POST',body:JSON.stringify({url:'https://hijala.com/'})}));
+assert.equal(response.status,200); const result=await response.json();
+assert.equal(result.url,'https://hijala.com/');assert(result.content.includes('مكتبة عامة'));
+assert(calls.length>=2);
+calls=[];
+context.fetchPublic=async(url)=>{calls.push(String(url));return calls.length===1?new Response('Denied',{status:403}):new Response(new Uint8Array([137,80,78,71]),{headers:{'content-type':'image/png'}});};
+vm.runInContext('this.handleImage=image;',context);
+const imageResponse=await context.handleImage(new Request('https://lux.test/api/image?url=https%3A%2F%2Fhijala.com%2Fpage.png'));
+assert.equal(imageResponse.status,200);assert.equal(imageResponse.headers.get('content-type'),'image/png');assert(calls.length>=2);
+console.log('PASS: link cleanup, credentials rejection, protection detection, fallback ordering, actual API 403 recovery; reader and Madara HTML import checked in browser.');

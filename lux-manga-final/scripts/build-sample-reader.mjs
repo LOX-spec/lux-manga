@@ -1,3 +1,5 @@
+import { fileURLToPath } from 'node:url';
+import { resolve } from 'node:path';
 import fs from 'node:fs';
 import vm from 'node:vm';
 import { normalizeRoute } from '../routing.js';
@@ -48,16 +50,17 @@ function documentHtml(view, title, css, markup = '') {
 }
 
 export function buildSamplePages() {
-  const source = fs.readFileSync('novels-demo.js', 'utf8');
-  const templates = fs.readFileSync('novel-pages.js', 'utf8');
+  const root = fileURLToPath(new URL('../', import.meta.url));
+  const source = fs.readFileSync(resolve(root, 'novels-demo.js'), 'utf8');
+  const templates = fs.readFileSync(resolve(root, 'novel-pages.js'), 'utf8');
   const { books, views } = vm.runInNewContext(source + '\n' + templates + '\n({ books: NOVELS_DATA, views: LuxNovelPages });');
-  const css = fs.readFileSync('sample-reader.css', 'utf8');
-  const detailsCss = fs.readFileSync('novel-details.css', 'utf8');
+  const css = fs.readFileSync(resolve(root, 'sample-reader.css'), 'utf8');
+  const detailsCss = fs.readFileSync(resolve(root, 'novel-details.css'), 'utf8');
   const pages = {};
   const coverAssets = {};
 
   for (const book of books) {
-    const coverSvg = fs.readFileSync('.' + book.cover, 'utf8');
+    const coverSvg = fs.readFileSync(resolve(root, '.' + book.cover), 'utf8');
     coverAssets[book.cover] = [coverSvg, 'image/svg+xml'];
     const cover = 'data:image/svg+xml;base64,' + Buffer.from(coverSvg).toString('base64');
     pages[views.detailsUrl(book.id)] = documentHtml('novel', book.title + ' · فهرس الفصول — لوكس',
@@ -65,7 +68,7 @@ export function buildSamplePages() {
     book.chapters.forEach((chapter, index) => {
       let illustration = '';
       if (chapter.illustration) {
-        illustration = fs.readFileSync('.' + chapter.illustration.asset, 'utf8');
+        illustration = fs.readFileSync(resolve(root, '.' + chapter.illustration.asset), 'utf8');
         coverAssets[chapter.illustration.asset] = [illustration, 'image/svg+xml'];
       }
       pages[views.chapterUrl(book.id, chapter.number)] = documentHtml('reader',

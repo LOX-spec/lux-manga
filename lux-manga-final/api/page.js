@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { buildSamplePages, novelPageView, samplePagePath } from '../scripts/build-sample-reader.mjs';
 import { normalizeRoute } from '../routing.js';
 
-const main = readFileSync('index.html', 'utf8');
+const main = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
 const { pages, shells } = buildSamplePages();
 
 export function GET(request) {

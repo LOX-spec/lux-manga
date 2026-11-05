@@ -1,0 +1,74 @@
+/* Shared application surfaces; standalone novel pages retain their reader styles. */
+.studio { --ui-radius: 14px; }
+.studio :is(button,a,input,select,textarea):focus-visible { outline: 2px solid var(--gold); outline-offset: 4px; }
+.studio button { touch-action: manipulation; }
+.studio #nav>button,.studio #nav details button { font-size: 13px; min-height: 44px; line-height: 1.5; }
+.studio #nav .nav-label { font-size: 10px; letter-spacing: .03em; margin-block: 25px 10px; }
+.studio #nav button.active { box-shadow: inset -3px 0 var(--red); border-color: transparent; }
+.studio #nav .nav-system { margin-top: 20px; }
+.studio .topbar .location>span { font-size: 10px; }
+.studio .topbar .location>strong { font-size: 16px; }
+.studio .topbar .search { border-radius: 12px; }
+.studio .topbar .search input { font-size: 13px; }
+.studio .topbar>.primary { min-height: 43px; border-radius: 11px; font-size: 12px; }
+.studio #page { padding-top: 26px; }
+.studio .section-head p,.studio .shelf-title p,.studio .studio-empty p { font-size: 13px; line-height: 1.9; }
+.studio .section-head h2,.studio .shelf-title h2 { font-size: clamp(22px,3vw,30px); }
+.studio .world-tabs>button { border-radius: var(--ui-radius); padding: 20px; }
+.studio .world-tabs b { font-size: 16px; }
+.studio .world-tabs small { font-size: 11px; line-height: 1.7; }
+.studio .card-art { border-radius: 12px; }
+.studio .studio-card h3 { font-size: 16px; height: 48px; line-height: 1.5; }
+.studio .card-genre { font-size: 10px; }
+.studio .card-bottom,.studio .read-status { font-size: 10px; line-height: 1.7; }
+.studio .catalog-toolbar { border-radius: 12px; padding-block: 14px; gap: 12px; }
+.studio .catalog-toolbar :is(button,select) { font-size: 12px; min-height: 40px; }
+.studio .source-card { border-radius: 18px; }
+.studio .source-card h2 { font-size: 18px; }
+.studio .source-status { font-size: 11px; }
+.studio .source-meta,.studio .source-card .note,.studio .source-inline { font-size: 12px; line-height: 1.8; }
+.studio .source-actions button { font-size: 12px; min-height: 42px; }
+.studio .source-overview { gap: 16px; }
+.studio .source-overview>div { border-radius: 14px; }
+.studio .source-diagnostics summary { font-size: 12px; padding-block: 16px; }
+.studio .form :is(input,select,textarea),.studio .novel-admin-panel :is(input,select,textarea) { border-radius: 10px; font-size: 15px; padding: 12px; }
+.studio .form :is(input,select),.studio .novel-admin-panel :is(input,select) { min-height: 46px; }
+.studio .form label,.studio .novel-admin-panel label { font-size: 13px; }
+.studio #settingsForm fieldset { border-radius: 16px; }
+.studio #settingsForm legend { padding-inline: 8px; }
+.studio #settingsForm .note { line-height: 1.9; }
+.studio #modal { border-radius: 20px; }
+.studio #modal .detail-description { line-height: 1.9; font-size: 14px; }
+.studio #modal .detail-tags { gap: 7px; }
+.studio #modal .detail-tags span { padding: 6px 10px; border-radius: 7px; }
+.studio #modal .chapter-row { min-height: 50px; border-radius: 9px; padding-inline: 15px; }
+.studio #modal .chapter-row>span { font-size: 14px; }
+.studio #modal .chapter-row>small { font-size: 11px; }
+.studio #modal .reader-tools { position: sticky; top: 0; z-index: 5; border: 1px solid var(--line); border-radius: 12px; background: var(--panel); padding: 12px; }
+.studio #modal .reader-tools :is(button,select) { min-height: 40px; font-size: 12px; }
+.studio .manga-page img { border-radius: 3px; }
+.studio footer { margin-top: 50px; padding-block: 26px; }
+.studio footer :is(button,a,span) { font-size: 11px; }
+.studio .novel-sample-card { border-radius: 15px; }
+.studio .novel-sample-copy h3 { font-size: 19px; }
+.studio .novel-sample-copy p { line-height: 1.9; }
+@media(max-width:760px) {
+  .studio .topbar .search input { font-size: 16px; }
+  .studio #page { padding-top: 20px; }
+  .studio #mobileNav { padding-block: 9px max(9px,env(safe-area-inset-bottom)); }
+  .studio #mobileNav button { min-height: 44px; font-size: 10px; gap: 5px; }
+  .studio #mobileNav button svg { width: 20px; height: 20px; }
+  .studio .form :is(input,select,textarea),.studio .novel-admin-panel :is(input,select,textarea) { font-size: 16px; }
+  .studio .world-tabs>button { padding: 16px; }
+  .studio #modal { border-radius: 15px; }
+  .studio #modal .reader-tools { padding: 8px; gap: 7px; }
+  .studio #modal .reader-tools :is(button,select) { min-height: 44px; }
+  .studio .source-overview { gap: 8px; }
+}
+/* Continuous strips have no visual gaps; paged mode uses explicit hidden pages. */
+.manga-reader .manga-page { margin:0; padding:0; line-height:0; }
+.manga-reader .manga-page img { display:block; margin:0 auto; }
+.manga-reader .manga-page[hidden] { display:none!important; }
+.manga-reader.rtl-pages { direction:rtl; }
+#smartImport { margin-top:1rem; padding:1rem; border:1px solid var(--line); border-radius:16px; }
+#smartImport textarea { width:100%; font:inherit; }

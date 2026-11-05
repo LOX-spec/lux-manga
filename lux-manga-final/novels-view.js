@@ -33,38 +33,110 @@ function novelCatalogMeta(book) {
     ${tags.length ? `<ul class="novel-catalog-tags" aria-label="التصنيفات">${tags.map(tag => `<li>${esc(tag)}</li>`).join('')}</ul>` : ''}`;
 }
 
+const novelShelfFilters = { query: '', genre: '', status: '', sort: 'updated' };
+const novelSearchText = value => String(value).normalize('NFKD')
+  .replace(/[\u064B-\u065F\u0670]/g, '').replace(/[أإآ]/g, 'ا').replace(/ى/g, 'ي').toLowerCase();
+
 function renderNovelSampleShelf() {
   const formatChapter = new Intl.NumberFormat('ar');
-  const novels = LuxNovelPublications.catalogue();
+  const allNovels = LuxNovelPublications.catalogue();
+  const query = novelSearchText(novelShelfFilters.query.trim());
+  const novels = allNovels.filter(book =>
+    (!query || novelSearchText([book.title, book.author, book.synopsis, ...book.genres].join(' ')).includes(query)) &&
+    (!novelShelfFilters.genre || book.genres.includes(novelShelfFilters.genre)) &&
+    (!novelShelfFilters.status || book.status === novelShelfFilters.status));
+  const order = {
+    title: (a, b) => a.title.localeCompare(b.title, 'ar'),
+    chapters: (a, b) => b.chapters.length - a.chapters.length,
+    updated: (a, b) => (b.updatedAt || b.publishedAt || 0) - (a.updatedAt || a.publishedAt || 0)
+  };
+  novels.sort(order[novelShelfFilters.sort] || order.updated);
+  const genres = [...new Set(allNovels.flatMap(book => book.genres))];
+  const recent = allNovels.map(book => ({ book, progress: LuxNovelPages.savedChapter(book) }))
+    .filter(item => item.progress).sort((a, b) => b.progress.time - a.progress.time).slice(0, 3);
   function cards(items) {
     return `<div class="novel-sample-grid">${items.map(novel => {
       const latest = novel.chapters.at(-1);
+      const progress = LuxNovelPages.savedChapter(novel);
       const chapterLabel = latest ? 'آخر فصل · ' + formatChapter.format(latest.number) + ' — ' + latest.title : 'لا توجد فصول منشورة بعد';
+      const primaryUrl = latest ? LuxNovelPages.chapterUrl(novel.id, progress?.chapter ?? novel.chapters[0].number) : LuxNovelPages.detailsUrl(novel.id);
       return `<article class="novel-sample-card" id="sample-novel-${esc(novel.id)}">
-        <a class="novel-sample-link" href="${esc(LuxNovelPages.detailsUrl(novel.id))}" aria-label="تفاصيل ${esc(novel.title)}">
+        <a class="novel-sample-link" href="${esc(primaryUrl)}" aria-label="${latest ? 'قراءة' : 'تفاصيل'} ${esc(novel.title)}">
         <div class="novel-sample-art">
           <img src="${esc(novel.cover)}" alt="غلاف ${esc(novel.title)}" width="600" height="800" loading="lazy" referrerpolicy="no-referrer" ${novel.publishedAt ? 'data-published-cover' : ''}>
           <span>${esc(novel.status)}</span>
         </div>
         <div class="novel-sample-copy">
           <h3>${esc(novel.title)}</h3>
+          <p class="novel-card-author">${esc(novel.author)} · ${formatChapter.format(novel.chapters.length)} فصول</p>
           <p class="novel-sample-chapter">${esc(chapterLabel)}</p>
           <p class="novel-sample-synopsis">${esc(novel.synopsis)}</p>
           <ul aria-label="التصنيفات">${novel.genres.map(tag => `<li>${esc(tag)}</li>`).join('')}</ul>
-          <span class="novel-sample-action">عرض الرواية والفصول ←</span>
         </div>
         </a>
+        <div class="novel-card-footer">
+          ${latest ? `<a href="${esc(LuxNovelPages.chapterUrl(novel.id, progress?.chapter ?? novel.chapters[0].number))}">${progress ? 'أكمل القراءة' : 'ابدأ القراءة'} ←</a>` : '<span>لا توجد فصول منشورة</span>'}
+          <a href="${esc(LuxNovelPages.detailsUrl(novel.id))}">الفهرس</a>
+        </div>
       </article>`;
     }).join('')}</div>`;
   }
-  const published = novels.filter(novel => novel.publishedAt);
   return `<section id="novel-local-shelf" class="novel-sample-shelf" aria-label="رف الروايات">
-    ${published.length ? `<h2>روايات من استوديو لوكس</h2>${cards(published)}` : ''}
-    <h2 id="novel-samples-title">روايات تجريبية</h2>
-    <p class="note">روايات تجريبية بأغلفة وفصول مختارة جاهزة للقراءة.</p>
-    ${cards(novels.filter(novel => !novel.publishedAt))}
+    <section class="novel-discover-hero" aria-labelledby="novel-discover-title">
+      <div class="novel-hero-copy"><span class="eyetag" lang="en">A LITTLE QUIET. A WHOLE NEW WORLD.</span>
+        <h2 id="novel-discover-title">افتح كتابًا.<br><em>واترك العالم ينتظر.</em></h2>
+        <p>مساحة هادئة لحكاياتك. اقرأ على مهل، وارجع دائمًا إلى حيث توقفت.</p>
+        <div class="novel-hero-actions"><a class="primary" href="#novel-samples-title">اكتشف حكايتك التالية ↓</a><a href="/?view=admin">استوديو الناشر ↗</a></div>
+        <div class="novel-library-numbers"><span><b>${formatChapter.format(allNovels.length)}</b> روايات في الرف</span><span><b>${formatChapter.format(allNovels.reduce((sum, book) => sum + book.chapters.length, 0))}</b> فصول متاحة</span><span>ثلاثة أوضاع للقراءة</span></div>
+      </div>
+      <div class="novel-cover-stack" aria-hidden="true">${allNovels.slice(0, 3).map(book => `<img src="${esc(book.cover)}" alt="" width="600" height="800" referrerpolicy="no-referrer" data-published-cover>`).join('')}</div>
+    </section>
+    ${recent.length ? `<section class="novel-resume-section"><div class="novel-section-title"><div><span class="eyetag">YOUR NEXT CHAPTER</span><h2>من حيث توقفت</h2></div><span>موضعك محفوظ على هذا الجهاز</span></div><div class="novel-resume-grid">${recent.map(({book, progress}) => `<a class="novel-resume-card" href="${esc(LuxNovelPages.chapterUrl(book.id, progress.chapter))}"><img src="${esc(book.cover)}" alt="" width="60" height="80" data-published-cover><span><b>${esc(book.title)}</b><small>متابعة الفصل ${formatChapter.format(progress.chapter)}</small></span><span aria-hidden="true">←</span></a>`).join('')}</div></section>` : ''}
+    <div class="novel-section-title"><div><span class="eyetag">THE COLLECTION</span><h2 id="novel-samples-title">كل حكاياتك، في مكان واحد</h2></div><span aria-live="polite">${formatChapter.format(novels.length)} روايات</span></div>
+    <div class="novel-library-tools">
+      <label class="novel-library-search">ابحث في الروايات<input type="search" id="novelLibraryQuery" value="${esc(novelShelfFilters.query)}" placeholder="عنوان، كاتب، أو تصنيف…" autocomplete="off"></label>
+      <label>حالة العمل<select id="novelLibraryStatus"><option value="">كل الحالات</option>${['مستمرة','مكتملة'].map(status => `<option ${status === novelShelfFilters.status ? 'selected' : ''}>${status}</option>`).join('')}</select></label>
+      <label>الترتيب<select id="novelLibrarySort">${[['updated','آخر تحديث'],['title','الاسم أبجديًا'],['chapters','عدد الفصول']].map(([value,label]) => `<option value="${value}" ${value === novelShelfFilters.sort ? 'selected' : ''}>${label}</option>`).join('')}</select></label>
+    </div>
+    <div class="novel-genre-filters" aria-label="تصنيفات الروايات">${['',...genres].map(genre => `<button type="button" data-novel-genre="${esc(genre)}" aria-pressed="${genre === novelShelfFilters.genre}">${esc(genre || 'الكل')}</button>`).join('')}</div>
+    ${cards(novels)}
+    ${!novels.length ? '<div class="novel-search-empty"><h3>لم نعثر على حكاية مطابقة</h3><p>جرّب عنوانًا آخر أو امسح عوامل التصفية.</p><button type="button" data-novel-reset>عرض كل الروايات</button></div>' : ''}
+    <p class="novel-shelf-note">الأعمال التجريبية مرفقة مع لوكس. أعمال استوديو الناشر ومواضع القراءة محفوظة في متصفحك.</p>
   </section>`;
 }
+
+let novelFilterTimer;
+function updateNovelFilters() {
+  const shelf = document.getElementById('novel-local-shelf');
+  if (shelf) shelf.outerHTML = renderNovelSampleShelf();
+}
+document.addEventListener('input', event => {
+  if (event.target.id !== 'novelLibraryQuery') return;
+  novelShelfFilters.query = event.target.value;
+  clearTimeout(novelFilterTimer);
+  novelFilterTimer = setTimeout(() => {
+    if (view !== 'novels') return;
+    updateNovelFilters();
+    document.getElementById('novelLibraryQuery')?.focus({ preventScroll: true });
+  }, 180);
+});
+document.addEventListener('change', event => {
+  if (event.target.id === 'novelLibraryStatus') novelShelfFilters.status = event.target.value;
+  else if (event.target.id === 'novelLibrarySort') novelShelfFilters.sort = event.target.value;
+  else return;
+  updateNovelFilters();
+});
+document.addEventListener('click', event => {
+  const genre = event.target.closest('[data-novel-genre]');
+  if (genre) {
+    novelShelfFilters.genre = genre.dataset.novelGenre;
+    updateNovelFilters();
+  }
+  if (event.target.closest('[data-novel-reset]')) {
+    Object.assign(novelShelfFilters, { query: '', genre: '', status: '', sort: 'updated' });
+    updateNovelFilters();
+  }
+});
 
 function prepareNovelReader(note) {
   const page = document.getElementById('page');

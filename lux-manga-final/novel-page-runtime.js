@@ -9,6 +9,7 @@ import { normalizeRoute } from './routing.js';
   let restore;
 
   function refresh() {
+    document.body.className = '';
     const book = LuxNovelPublications.catalogue().find(novel => String(novel.id) === id);
     const number = requestedChapter === null ? book?.chapters[0]?.number
       : LuxNovelPublications.chapterNumber(requestedChapter);
@@ -54,7 +55,7 @@ import { normalizeRoute } from './routing.js';
   });
   window.addEventListener('storage', event => {
     if (LuxNovelPublications.changed(event)) refresh();
-    if (isDetails && event.key === 'lux-sample-progress:v1:' + id) restore?.();
+    if (isDetails && [null, 'lux-sample-progress:v1:' + id, 'lux-reader-bookmark:v1:' + id].includes(event.key)) restore?.();
   });
   window.addEventListener('lux-novels-changed', refresh);
   if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js', { updateViaCache: 'none' }).catch(() => {});

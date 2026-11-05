@@ -1,5 +1,5 @@
 /* Install, update and offline services share the existing library and reader. */
-const luxRelease='3.0';
+const luxRelease='4.3';
 let luxRegistration,luxUpdateReady=false,luxReloading=false,luxStorage;
 const luxDownloads=new Map();
 installPanel=function(){return `<fieldset class="install-panel"><legend>لوكس على جهازك</legend><p class="note">ثبّت تطبيق الويب على أندرويد أو ويندوز أو آيفون. إدارة التثبيت والعمل دون اتصال متاحة في صفحة واحدة.</p><button type="button" data-view="getapp">فتح تحميل التطبيق</button></fieldset>`};
@@ -47,7 +47,7 @@ async function luxStart(requested) {
   for (const job of Object.values(state.downloadJobs || {})) {
     if (job.status === 'running') job.status = 'paused';
   }
-  if (['library', 'reading', 'sites', 'getapp', 'downloads', 'comics'].includes(requested)) go(requested);
+  if (Object.hasOwn(studioViews, requested) && !['novels', 'admin'].includes(requested)) go(requested);
   luxReadStorage();
 }
 

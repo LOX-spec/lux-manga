@@ -91,7 +91,9 @@ const LuxNovelPublications = (() => {
     return [...books.values()].map(book => {
       const chapters = new Map(book.chapters.filter(validChapter).map(chapter => [Number(chapter.number), chapter]));
       for (const chapter of chaptersByBook.get(String(book.id)) || []) chapters.set(Number(chapter.number), chapter);
-      return { ...book, chapters: [...chapters.values()].sort((a, b) => a.number - b.number) };
+      const available = [...chapters.values()].sort((a, b) => a.number - b.number);
+      const updatedAt = Math.max(book.updatedAt || book.publishedAt || 0, ...available.map(chapter => chapter.updatedAt || 0));
+      return { ...book, chapters: available, updatedAt };
     }).sort((a, b) => (b.publishedAt || 0) - (a.publishedAt || 0));
   }
 
@@ -104,13 +106,13 @@ const LuxNovelPublications = (() => {
     window.dispatchEvent(new Event('lux-novels-changed'));
   }
 
-  function locked(key, operation) {
-    return navigator.locks ? navigator.locks.request(key, operation) : Promise.resolve().then(operation);
+  function locked(operation) {
+    return navigator.locks ? navigator.locks.request('lux-novel-studio-write', operation) : Promise.resolve().then(operation);
   }
 
   function saveNovel(fields) {
     const id = fields.id || 'studio-' + crypto.randomUUID();
-    return locked(bookPrefix + id, () => {
+    return locked(() => {
       const previous = catalogue().find(book => String(book.id) === id);
       const savedBook = records(bookPrefix, validBook).find(book => String(book.id) === id);
       if (fields.id && !previous) throw new Error('هذه الرواية غير موجودة.');
@@ -175,7 +177,7 @@ const LuxNovelPublications = (() => {
     const title = String(fields.title || '').trim();
     if (!title || !content.length) throw new Error('أدخل عنوان الفصل ومحتواه.');
     const key = chapterPrefix + bookId + ':' + number;
-    return locked(key, () => {
+    return locked(() => {
       const book = catalogue().find(item => String(item.id) === bookId);
       if (!book) throw new Error('اختر الرواية التي تريد النشر فيها.');
       const previous = book.chapters.find(chapter => chapter.number === number);
@@ -197,8 +199,68 @@ const LuxNovelPublications = (() => {
       ? '![' + block.alt + '](' + block.image + ')' : block.text).join('\n\n');
   }
 
+  function backup() {
+    const reading = {};
+    for (const book of catalogue()) {
+      const id = String(book.id);
+      reading[id] = {};
+      for (const key of ['lux-sample-progress:v1:' + id, 'lux-reader-bookmark:v1:' + id]) {
+        reading[id][key] = localStorage.getItem(key);
+      }
+    }
+    return { format: 'lux-novels', version: 1, exportedAt: new Date().toISOString(),
+      books: catalogue(), reading, settings: localStorage.getItem('lux-novel-reader:v1') };
+  }
+
+  function restoreBackup(data) {
+    if (data?.format !== 'lux-novels' || data.version !== 1 || !Array.isArray(data.books) ||
+        !data.books.length || !data.books.every(book => validBook(book) && book.chapters.every(validChapter))) {
+      throw new Error('ملف النسخة الاحتياطية غير صالح.');
+    }
+    return locked(() => {
+      const updates = new Map();
+      for (const book of data.books) {
+        const id = String(book.id);
+        updates.set(bookPrefix + id, JSON.stringify({ ...book, chapters: [] }));
+        for (const chapter of book.chapters) {
+          updates.set(chapterPrefix + id + ':' + Number(chapter.number),
+            JSON.stringify({ ...chapter, bookId: id, number: Number(chapter.number) }));
+        }
+        const progressKey = 'lux-sample-progress:v1:' + id;
+        const chapter = data.reading?.[id]?.[progressKey];
+        if (book.chapters.some(item => String(item.number) === chapter)) updates.set(progressKey, chapter);
+        const bookmarkKey = 'lux-reader-bookmark:v1:' + id;
+        const bookmark = data.reading?.[id]?.[bookmarkKey];
+        if (typeof bookmark === 'string') {
+          try {
+            const parsed = JSON.parse(bookmark);
+            if (book.chapters.some(item => String(item.number) === String(parsed.chapter))) updates.set(bookmarkKey, bookmark);
+          } catch {}
+        }
+      }
+      if (typeof data.settings === 'string') {
+        try {
+          const settings = JSON.parse(data.settings);
+          if (settings && typeof settings === 'object') updates.set('lux-novel-reader:v1', data.settings);
+        } catch {}
+      }
+      const previous = new Map([...updates.keys()].map(key => [key, localStorage.getItem(key)]));
+      try {
+        for (const [key, value] of updates) localStorage.setItem(key, value);
+      } catch {
+        for (const [key, value] of previous) {
+          if (value === null) localStorage.removeItem(key);
+          else localStorage.setItem(key, value);
+        }
+        throw new Error('لم تكتمل الاستعادة. احتفظ المتصفح بالبيانات السابقة؛ تحقّق من المساحة المتاحة.');
+      }
+      window.dispatchEvent(new Event('lux-novels-changed'));
+      return data.books.length;
+    });
+  }
+
   return {
-    catalogue, imageUrl, chapterNumber, contentSource,
+    catalogue, imageUrl, chapterNumber, contentSource, previewContent: chapterContent, backup, restoreBackup,
     publishNovel: saveNovel, publishChapter: saveChapter,
     storageWarning: () => warning,
     changed: event => event.key === null || event.key === seedKey || event.key.startsWith(prefix)

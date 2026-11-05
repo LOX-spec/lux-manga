@@ -36,7 +36,10 @@ export function fetchPublic(url, { accept, signal }) {
       agent: false,
       family: 4,
       lookup: lookupPublic,
-      headers: { Accept: accept, 'Accept-Encoding': 'identity' },
+      headers: { Accept: accept, 'Accept-Encoding': 'identity',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
+        'Accept-Language': 'ar,en-US;q=0.8,en;q=0.7',
+        Referer: new URL(url).origin + '/', Origin: new URL(url).origin },
       signal
     }, incoming => {
       try {

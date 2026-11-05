@@ -5,10 +5,11 @@ const params = url.searchParams;
 const view = params.get('view');
 const novelPage = ['novel', 'reader'].includes(view) && params.get('library') !== '1';
 const applicationScripts = [
-  'import.js', 'audit.js', 'settings.js', 'features.js', 'experience.js', 'app.js',
+  'chapter-links.js', 'import.js', 'audit.js', 'settings.js', 'features.js', 'experience.js', 'app.js',
   'novel-reader.js', 'media.js', 'discovery.js', 'scanner.js', 'source-delete.js',
   'collections.js', 'novels-demo.js', 'novel-publications.js', 'novel-pages.js',
-  'novel-admin.js', 'novels-view.js', 'studio.js', 'install.js'
+  'novel-admin.js', 'novels-view.js', 'studio.js', 'comicverse-data.js',
+  'comicverse-source.js', 'comics-model.js', 'comics-hub.js', 'manga-samples.js', 'smart-import.js', 'universal-backup.js', 'install.js'
 ];
 
 if (novelPage) {
@@ -17,7 +18,6 @@ if (novelPage) {
   stylesheet.rel = 'stylesheet';
   stylesheet.href = view === 'novel' ? '/novel-details.css' : '/sample-reader.css';
   document.head.append(stylesheet);
-  document.body.className = '';
 }
 
 function loadScript(path, module = false) {
@@ -54,4 +54,5 @@ try {
   main.style.cssText = 'max-width:40rem;margin:4rem auto;padding:1rem;font-family:Tahoma,sans-serif';
   main.append(message, retry);
   document.body.replaceChildren(main);
+  document.body.className = '';
 }

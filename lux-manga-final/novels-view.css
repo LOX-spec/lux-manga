@@ -101,3 +101,88 @@
 }
 .studio .novel-cover-art img.novel-cover-ready { opacity: 1; }
 .studio .novel-card-details { display: inline-block; margin-block: .45rem; color: var(--gold); font-size: .8rem; }
+
+.studio .novel-sample-shelf { margin-top: .5rem; }
+.studio .novel-discover-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(14rem, .8fr);
+  gap: 2rem;
+  align-items: center;
+  min-height: 355px;
+  padding: clamp(1.5rem, 4vw, 3.5rem);
+  overflow: hidden;
+  isolation: isolate;
+  position: relative;
+  border: 1px solid #be9b6c40;
+  border-radius: 24px;
+  background: radial-gradient(ellipse at 13% 40%, #8e604c45, transparent 60%), #211b17;
+  color: #fff2e1;
+}
+.studio .novel-discover-hero::after {
+  content: '';
+  position: absolute;
+  inset: 14px;
+  border: 1px solid #ddbb8820;
+  border-radius: 16px;
+  pointer-events: none;
+}
+.studio .novel-discover-hero h2 { font-size: clamp(2.2rem, 4.5vw, 4.2rem); line-height: 1.25; letter-spacing: -.06em; margin: 1.2rem 0; }
+.studio .novel-discover-hero h2 em { color: #dfb98a; font-style: normal; }
+.studio .novel-hero-copy > p { color: #c3b6a8; line-height: 1.9; font-size: .94rem; max-width: 29rem; }
+.studio .novel-hero-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 1.25rem; margin-top: 1.7rem; font-size: .85rem; }
+.studio .novel-hero-actions .primary { display: inline-flex; padding: .8rem 1rem; border-radius: 9px; color: white; text-decoration: none; }
+.studio .novel-hero-actions > a:last-child { color: #d6b48c; }
+.studio .novel-library-numbers { display: flex; gap: 1.2rem; flex-wrap: wrap; margin-top: 2rem; color: #a99a89; font-size: .73rem; }
+.studio .novel-library-numbers b { color: #f3dbc0; margin-inline-end: .25rem; }
+.studio .novel-cover-stack { position: relative; height: 280px; direction: ltr; }
+.studio .novel-cover-stack img {
+  position: absolute; width: 170px; height: 235px; object-fit: cover; border-radius: 5px 12px 12px 5px;
+  box-shadow: 0 22px 42px #0008; border: 1px solid #efd9bb40; top: 25px; left: calc(50% - 85px);
+}
+.studio .novel-cover-stack img:nth-child(1) { transform: translateX(-65px) rotate(-13deg); }
+.studio .novel-cover-stack img:nth-child(2) { transform: translateX(65px) rotate(13deg); }
+.studio .novel-cover-stack img:nth-child(3) { transform: translateY(-12px) rotate(-2deg); }
+.studio .novel-section-title { display: flex; align-items: end; justify-content: space-between; flex-wrap: wrap; gap: 1rem; margin: 2.5rem 0 1.2rem; }
+.studio .novel-section-title h2 { margin: .5rem 0 0; font-size: 1.5rem; }
+.studio .novel-section-title > span { color: var(--muted); font-size: .78rem; }
+.studio .novel-library-tools { display: grid; grid-template-columns: minmax(0, 1fr) 10rem 11rem; gap: .8rem; padding: 1rem; border: 1px solid var(--line); background: var(--panel); border-radius: 14px; }
+.studio .novel-library-tools label { display: grid; gap: .5rem; font-size: .75rem; color: var(--muted); }
+.studio .novel-library-tools input, .studio .novel-library-tools select { width: 100%; background: var(--bg); font-size: .85rem; min-height: 44px; }
+.studio .novel-genre-filters { display: flex; flex-wrap: wrap; gap: .5rem; margin: 1rem 0 1.5rem; }
+.studio .novel-genre-filters button { min-height: 34px; padding: .4rem .85rem; border-radius: 100px; color: var(--muted); font-size: .76rem; }
+.studio .novel-genre-filters button[aria-pressed="true"] { background: var(--gold); border-color: var(--gold); color: var(--bg); }
+.studio .novel-sample-grid { grid-template-columns: repeat(auto-fill, minmax(min(100%, 14rem), 1fr)); gap: 1.25rem; }
+.studio .novel-sample-card { display: flex; flex-direction: column; border-radius: 16px; transition: transform .2s, box-shadow .2s; }
+.studio .novel-sample-link { height: auto; flex: 1; }
+.studio .novel-sample-art { background: var(--soft); margin: .6rem .6rem 0; border-radius: 10px; }
+.studio .novel-sample-art img { aspect-ratio: 3 / 4; }
+.studio .novel-sample-copy { padding: 1rem; }
+.studio .novel-sample-copy h3 { font-size: 1.2rem; margin-bottom: .5rem; }
+.studio .novel-card-author { color: var(--muted); font-size: .75rem; }
+.studio .novel-sample-synopsis { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; min-height: 2.75rem; }
+.studio .novel-sample-copy ul { display: none; }
+.studio .novel-card-footer { border-top: 1px solid var(--line); display: flex; justify-content: space-between; gap: .5rem; padding: 1rem; font-size: .78rem; color: var(--muted); }
+.studio .novel-card-footer a:first-child { color: var(--gold); font-weight: 700; }
+.studio .novel-resume-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr)); gap: .85rem; }
+.studio .novel-resume-card { display: flex; align-items: center; gap: .85rem; padding: .85rem; background: var(--panel); border: 1px solid var(--line); border-radius: 14px; }
+.studio .novel-resume-card img { width: 48px; height: 65px; border-radius: 6px; object-fit: cover; }
+.studio .novel-resume-card > span:first-of-type { flex: 1; min-width: 0; }
+.studio .novel-resume-card b { display: block; font-size: .9rem; }
+.studio .novel-resume-card small { display: block; margin-top: .45rem; font-size: .75rem; color: var(--gold); }
+.studio .novel-search-empty { padding: 3rem 1rem; text-align: center; border: 1px dashed var(--line); border-radius: 16px; color: var(--muted); }
+.studio .novel-shelf-note { margin: 2rem 0 0; text-align: center; color: var(--muted); font-size: .74rem; line-height: 1.9; }
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .studio .novel-sample-card:hover { transform: translateY(-5px); box-shadow: 0 12px 30px #0003; }
+}
+@media (max-width: 700px) {
+  .studio .novel-discover-hero { grid-template-columns: 1fr; gap: .5rem; padding: 1.7rem; }
+  .studio .novel-cover-stack { height: 215px; grid-row: 1; }
+  .studio .novel-cover-stack img { height: 185px; width: 135px; left: calc(50% - 67px); top: 18px; }
+  .studio .novel-discover-hero h2 { font-size: 2.4rem; }
+  .studio .novel-library-tools { grid-template-columns: 1fr 1fr; padding: .85rem; }
+  .studio .novel-library-search { grid-column: 1 / -1; }
+  .studio .novel-sample-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .65rem; }
+  .studio .novel-sample-copy { padding: .8rem; }
+  .studio .novel-sample-copy h3 { font-size: 1rem; }
+  .studio .novel-card-footer { padding: .8rem; flex-wrap: wrap; }
+}

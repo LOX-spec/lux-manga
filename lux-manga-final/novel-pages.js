@@ -6,6 +6,19 @@ const LuxNovelPages = (() => {
   const detailsUrl = id => '/?view=novel&id=' + encodeURIComponent(id);
 
   const chapterNumbers = chapters => chapters.map(chapter => chapter.number).join(',');
+  function savedChapter(book) {
+    try {
+      const number = localStorage.getItem('lux-sample-progress:v1:' + book.id);
+      const chapter = book.chapters.find(item => String(item.number) === number);
+      if (chapter) return { chapter: chapter.number, time: Number(localStorage.getItem('lux-reader-visited:v1:' + book.id)) || 0 };
+    } catch {}
+    return null;
+  }
+  function chapterMetrics(chapter) {
+    const text = chapter.text?.join(' ') || chapter.content?.map(block => block.text || '').join(' ') || '';
+    const words = text.match(/\S+/g)?.length || 0;
+    return { words, minutes: Math.max(1, Math.ceil(words / 180)) };
+  }
   function contentKey(book) {
     const source = JSON.stringify(book);
     let fingerprint = 2166136261;
@@ -35,12 +48,14 @@ const LuxNovelPages = (() => {
             ${book.genres.map(tag => `<li>${escapeHtml(tag)}</li>`).join('')}
           </ul>
           <p class="novel-synopsis">${escapeHtml(book.synopsis)}</p>
+          <div class="novel-facts"><span><b>${chapters.length}</b> فصول متاحة</span><span>نص عربي · قراءة متسلسلة</span><span>أكمل من حيث توقفت</span></div>
           <div class="novel-actions">
             ${chapters.length
               ? '<a class="novel-button primary" href="' + escapeHtml(chapterUrl(book.id, chapters[0].number)) + '">ابدأ القراءة</a>'
               : '<button class="novel-button primary" type="button" disabled>ابدأ القراءة</button>'}
             <a class="novel-button" id="novel-resume" hidden>متابعة القراءة</a>
             <button class="novel-button" type="button" id="novel-resume-unavailable" disabled title="افتح فصلًا ليظهر موضع المتابعة">متابعة القراءة</button>
+            <a class="novel-button" id="novel-bookmark" hidden>علامة القراءة</a>
           </div>
         </div>
       </section>
@@ -49,6 +64,8 @@ const LuxNovelPages = (() => {
           <div><h2 id="chapter-index-title">فهرس الفصول</h2><p>عدد الفصول المتاحة: ${chapters.length}</p></div>
           <button class="novel-button" type="button" id="novel-chapter-order" aria-pressed="false"${chapters.length < 2 ? ' disabled' : ''}>الترتيب: الأقدم أولًا</button>
         </header>
+        <label class="chapter-search">ابحث في الفصول<input type="search" id="novel-chapter-search" placeholder="رقم الفصل أو عنوانه…" autocomplete="off"></label>
+        <p id="novel-chapter-results" aria-live="polite" class="chapter-search-results"></p>
         <ol class="chapter-list" id="novel-chapter-list">
           ${chapters.map(chapter => `<li data-chapter="${chapter.number}">
             <a href="${escapeHtml(chapterUrl(book.id, chapter.number))}">
@@ -67,6 +84,7 @@ const LuxNovelPages = (() => {
     const chapter = chapters[index];
     const chapterName = 'الفصل ' + chapter.number;
     const chapterLabel = chapterName + ' · ' + chapter.title;
+    const metrics = chapterMetrics(chapter);
     const navigation = (direction, target, label) => target
       ? `<a data-label="${direction}" rel="${direction === 'previous' ? 'prev' : 'next'}"
         href="${escapeHtml(chapterUrl(book.id, target.number))}">${label}</a>`
@@ -76,12 +94,13 @@ const LuxNovelPages = (() => {
     return `
     <main id="sample-reader" data-novel-id="${escapeHtml(book.id)}" data-chapter="${chapter.number}" data-chapter-numbers="${chapterNumbers(chapters)}" data-content-key="${contentKey(book)}">
       <header class="reader-bar">
+        <div class="reader-progress-track"><div id="reader-progress-bar"></div></div>
         <div class="reader-bar-inner">
           <a class="reader-back" data-label="index" href="${escapeHtml(detailsUrl(book.id))}">الرجوع لفهرس الرواية</a>
           <div class="reader-title">
             <strong>${escapeHtml(book.title)}</strong><small>${escapeHtml(chapterLabel)}</small>
           </div>
-          <div class="reader-controls">
+          <details class="reader-options" open><summary data-label="tools">إعدادات القراءة</summary><div class="reader-controls">
             <label for="sample-theme" data-label="theme">المظهر</label>
             <select id="sample-theme">
               <option value="dark" data-label="dark">داكن</option>
@@ -97,12 +116,18 @@ const LuxNovelPages = (() => {
             <select id="sample-chapters" aria-label="اختر الفصل" data-control-label="chapters">
               ${chapters.map(item => `<option value="${escapeHtml(chapterUrl(book.id, item.number))}"${item === chapter ? ' selected' : ''}>${escapeHtml('الفصل ' + item.number)}</option>`).join('')}
             </select>
-          </div>
+            <label for="reader-width" data-label="width">عرض النص</label>
+            <select id="reader-width"><option value="36">ضيّق</option><option value="42">مريح</option><option value="50">واسع</option></select>
+            <label for="reader-spacing" data-label="spacing">تباعد الأسطر</label>
+            <select id="reader-spacing"><option value="1.7">1.7</option><option value="1.9">1.9</option><option value="2.2">2.2</option></select>
+            <button type="button" id="reader-bookmark" aria-pressed="false" data-label="bookmark">حفظ علامة</button>
+          </div></details>
         </div>
       </header>
       <div class="reader-paper">
         <p class="reader-eyebrow" data-label="${chapter.content ? 'published' : 'sample'}">${chapter.content ? 'منشور في استوديو لوكس' : 'فصل تجريبي من لوكس'}</p>
         <h1>${escapeHtml(chapter.title)}</h1>
+        <div class="reader-chapter-meta"><span>${metrics.words} كلمة</span><span>نحو ${metrics.minutes} د للقراءة</span><output id="reader-progress-label" aria-label="تقدم القراءة" dir="ltr">0%</output></div>
         ${chapter.illustration
           ? `<figure class="reader-scene">${illustration || '<img src="' + escapeHtml(chapter.illustration.asset) + '" alt="">'}<figcaption>${escapeHtml(chapter.illustration.caption)}</figcaption></figure>`
           : ''}
@@ -113,10 +138,11 @@ const LuxNovelPages = (() => {
             : chapter.text.map(paragraph => `<p>${escapeHtml(paragraph)}</p>`).join('')}
         </article>
         <nav class="reader-nav" aria-label="التنقل بين الفصول">${previous}${next}</nav>
+        <p class="reader-footnote" data-label="saved">موضعك وإعداداتك محفوظان في هذا المتصفح.</p>
       </div>
     </main>
   `;
   }
 
-  return { details, reader, detailsUrl, chapterUrl, chapterNumbers, contentKey };
+  return { details, reader, detailsUrl, chapterUrl, chapterNumbers, contentKey, savedChapter, chapterMetrics };
 })();
