@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="600" height="800" viewBox="0 0 600 800" role="img" aria-labelledby="title">
+  <title id="title">غلاف قلعة الزجاج</title>
+  <defs><linearGradient id="sky" x2="0" y2="1"><stop stop-color="#291933"/><stop offset="1" stop-color="#704263"/></linearGradient></defs>
+  <rect width="600" height="800" fill="url(#sky)"/>
+  <path d="M300 254 487 465 300 687 113 465z" fill="#c88cb2" opacity=".27"/>
+  <path d="M300 254 487 465 300 687 113 465zM113 465h374M300 254v433" fill="none" stroke="#f1bfdc" stroke-width="3" opacity=".72"/>
+  <path d="M150 536v-97l34-40 34 40v56h35V390l47-60 47 60v105h35v-56l34-40 34 40v97z" fill="#2a203c" stroke="#dfacd0" stroke-width="3"/>
+  <path d="M283 536v-61q17-30 34 0v61M177 471v-20m246 20v-20" fill="none" stroke="#f1bfdc" stroke-width="3"/>
+  <path d="m103 354 21-23m-10 79-27 4m410-61-21-23m10 79 27 4m-338 180-26 27m276-27 26 27" stroke="#f2c2df" stroke-linecap="round" stroke-width="3"/>
+  <rect x="24" y="24" width="552" height="752" rx="10" fill="none" stroke="#dca4cb" opacity=".75"/>
+  <text x="300" y="155" text-anchor="middle" fill="#fce4f3" font-family="Tahoma,Arial,sans-serif" font-size="62" font-weight="700" direction="rtl">قلعة الزجاج</text>
+  <path d="M236 191h128" stroke="#dca4cb" opacity=".7"/>
+  <text x="300" y="750" text-anchor="middle" fill="#f0cde6" font-family="Georgia,serif" font-size="15" letter-spacing="5">LUX LIBRARY</text>
+</svg>

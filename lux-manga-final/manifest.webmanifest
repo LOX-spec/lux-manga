@@ -1,0 +1,54 @@
+{
+  "id": "/",
+  "name": "لوكس — مكتبتك للقراءة",
+  "short_name": "لوكس",
+  "description": "المانجا والمانهوا والكومكس والروايات. مكتبتك وفصولك المحفوظة في مكان واحد.",
+  "lang": "ar",
+  "dir": "rtl",
+  "start_url": "/?view=novels&source=pwa",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#171311",
+  "theme_color": "#171311",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "display_override": [
+    "standalone",
+    "minimal-ui"
+  ],
+  "categories": [
+    "books",
+    "entertainment"
+  ],
+  "shortcuts": [
+    {
+      "name": "رف الروايات",
+      "url": "/?view=novels"
+    },
+    {
+      "name": "أكمل القراءة",
+      "short_name": "أقرأ الآن",
+      "url": "/?view=reading"
+    },
+    {
+      "name": "مكتبتي",
+      "url": "/?view=library"
+    },
+    {
+      "name": "التحميلات",
+      "url": "/?view=downloads"
+    }
+  ]
+}

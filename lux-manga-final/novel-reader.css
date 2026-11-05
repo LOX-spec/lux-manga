@@ -1,0 +1,142 @@
+.studio :is(#modal, .novel-sample-reader-host):has(.lux-novel-reader) {
+  --lux-paper: #f3e6cc;
+  --lux-ink: #36291f;
+  --lux-panel: #e9d8ba;
+  --lux-rule: #c4ae8a;
+  background: var(--lux-paper);
+  color: var(--lux-ink);
+}
+.studio :is(#modal, .novel-sample-reader-host):has(.lux-novel-reader[data-theme="dark"]) {
+  --lux-paper: #16191e;
+  --lux-ink: #ece9e3;
+  --lux-panel: #232831;
+  --lux-rule: #565e6b;
+}
+.studio :is(#modal, .novel-sample-reader-host):has(.lux-novel-reader[data-theme="light"]) {
+  --lux-paper: #fff;
+  --lux-ink: #25272d;
+  --lux-panel: #f0f2f5;
+  --lux-rule: #b3bac5;
+}
+.studio #modal:has(.lux-novel-reader) > .close {
+  float: none;
+  margin-inline-start: auto;
+  position: sticky;
+  top: 0;
+  z-index: 22;
+}
+.studio #modal:has(.lux-novel-reader) > .close,
+.studio .lux-novel-reader button:not(.primary),
+.studio .lux-novel-reader select {
+  background: var(--lux-panel);
+  color: var(--lux-ink);
+  border-color: var(--lux-rule);
+}
+.studio .lux-novel-reader .lux-novel-tools {
+  top: 33px;
+  display: grid;
+  justify-content: stretch;
+  gap: 8px;
+  background: var(--lux-paper);
+  color: var(--lux-ink);
+  border-color: var(--lux-rule);
+}
+.studio .lux-novel-settings,
+.studio .lux-novel-chapters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.studio .lux-novel-tools label,
+.studio .lux-novel-reader .reader-utility {
+  color: var(--lux-ink);
+}
+.studio .lux-novel-tools select {
+  width: auto;
+  max-width: min(20rem, 100%);
+}
+.studio .lux-novel-chapters select {
+  min-width: 0;
+  flex: 0 1 18rem;
+}
+.studio .lux-novel-reader output {
+  font-size: .8rem;
+  min-width: 3.5rem;
+  text-align: center;
+  direction: ltr;
+}
+.studio .lux-novel-heading {
+  margin: 0 auto .25rem;
+  text-align: center;
+}
+.studio .lux-novel-heading p { margin: 0 0 .2rem; font-size: .8rem; }
+.studio .lux-novel-heading h2 {
+  margin: 0;
+  font-size: clamp(1rem, 3vw, 1.4rem);
+  color: inherit;
+  overflow-wrap: anywhere;
+}
+.studio .lux-novel-reader .lux-novel-text {
+  max-width: 42rem;
+  font-size: var(--lux-novel-font, 22px);
+  color: var(--lux-ink);
+  line-height: 2;
+  font-weight: 600;
+}
+.studio .lux-novel-text p { text-align: start; }
+.studio .lux-novel-reader .chapter-end {
+  margin-block: 2rem;
+  border-color: var(--lux-rule);
+}
+.studio .lux-novel-reader :focus-visible {
+  outline: 2px solid var(--lux-ink);
+  outline-offset: 2px;
+}
+.studio .lux-novel-shelf { margin-block: 2.5rem; }
+.studio .lux-novel-shelf-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: .75rem;
+}
+.studio .lux-novel-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 1fr));
+  gap: .9rem;
+  margin-block-start: 1rem;
+}
+.studio .lux-novel-card {
+  display: flex;
+  gap: .8rem;
+  min-width: 0;
+  padding: .85rem;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--panel);
+}
+.studio .lux-novel-cover {
+  flex: 0 0 4.7rem;
+  display: block;
+  align-self: flex-start;
+  overflow: hidden;
+  padding: 0;
+  aspect-ratio: 2 / 3;
+}
+.studio .lux-novel-cover img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.studio .lux-novel-card-copy { min-width: 0; overflow-wrap: anywhere; }
+.studio .lux-novel-card-copy h3 { margin: 0 0 .4rem; }
+.studio .lux-novel-card-copy p { margin: 0 0 .6rem; color: var(--muted); }
+.studio .lux-novel-card-copy p span { display: block; color: var(--text); }
+@media (max-width: 760px) {
+  .studio .lux-novel-tools button,
+  .studio .lux-novel-tools select { min-height: 40px; font-size: 12px; }
+  .studio .lux-novel-chapters select { flex-basis: 100%; }
+}

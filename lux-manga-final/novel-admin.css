@@ -1,0 +1,92 @@
+.studio .novel-admin {
+  display: grid;
+  gap: 1rem;
+  max-width: 74rem;
+  margin-inline: auto;
+}
+
+.studio .novel-admin-intro {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+  padding: clamp(1.2rem, 4vw, 2.5rem);
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: radial-gradient(ellipse at 95% 0, #9871bd28, transparent 72%), var(--panel);
+}
+
+.studio .novel-admin-intro h1 {
+  margin: .55rem 0 .35rem;
+  font-size: clamp(1.6rem, 4vw, 2.6rem);
+}
+
+.studio .novel-admin p { margin: 0; color: var(--muted); line-height: 1.7; }
+.studio .novel-admin a, .studio footer .novel-admin-link {
+  color: var(--gold);
+  text-decoration: underline;
+  text-underline-offset: .25em;
+}
+
+.studio .novel-admin .novel-admin-storage {
+  padding: .6rem .9rem;
+  border-inline-start: 2px solid var(--gold);
+  font-size: .9rem;
+}
+
+.studio .novel-admin-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+  align-items: start;
+}
+
+.studio .novel-admin-panel {
+  min-width: 0;
+  display: grid;
+  gap: .85rem;
+  padding: clamp(1rem, 3vw, 1.6rem);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--panel);
+}
+
+.studio .novel-admin-panel header { display: flex; align-items: start; gap: .75rem; margin-bottom: .3rem; }
+.studio .novel-admin-panel header h2 { font-size: 1.2rem; margin: 0 0 .25rem; }
+.studio .novel-admin-panel header p { font-size: .84rem; }
+.studio .novel-admin-step {
+  display: grid;
+  place-items: center;
+  flex: 0 0 2.15rem;
+  height: 2.15rem;
+  border-radius: .65rem;
+  background: #9871bd26;
+  color: var(--gold);
+  font-weight: 700;
+}
+
+.studio .novel-admin-panel label { display: grid; gap: .35rem; font-size: .88rem; font-weight: 700; }
+.studio .novel-admin-field { display: grid; gap: .35rem; }
+.studio .novel-admin-panel :is(input, select, textarea) {
+  width: 100%;
+  min-width: 0;
+  min-height: 2.6rem;
+  padding: .6rem .7rem;
+  border: 1px solid var(--line);
+  border-radius: .55rem;
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+  font-weight: 400;
+}
+
+.studio .novel-admin-panel textarea { resize: vertical; line-height: 1.65; }
+.studio .novel-admin-panel button { justify-self: start; }
+.studio .novel-admin-panel #chapter-image-hint { font-size: .8rem; overflow-wrap: anywhere; }
+.studio .novel-admin-result:empty { display: none; }
+.studio .novel-admin-result.is-error { color: var(--text); border-inline-start: 2px solid #e26b5c; padding-inline-start: .55rem; }
+
+@media (max-width: 760px) {
+  .studio .novel-admin-grid { grid-template-columns: minmax(0, 1fr); }
+}

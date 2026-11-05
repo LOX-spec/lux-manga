@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="600" height="800" viewBox="0 0 600 800" role="img" aria-labelledby="title">
+  <title id="title">غلاف عهد الرماد</title>
+  <defs><linearGradient id="sky" x2="0" y2="1"><stop stop-color="#241626"/><stop offset=".65" stop-color="#873d45"/><stop offset="1" stop-color="#e29b5c"/></linearGradient></defs>
+  <rect width="600" height="800" fill="url(#sky)"/>
+  <circle cx="350" cy="449" r="104" fill="#ffc487" opacity=".76"/>
+  <path d="M0 600h44v-53h54v-59h48v92h53v-73h36v-83h39V318h54v106h38v95h38v63h58v-88h50v61h44v-36h44v281H0z" fill="#281d30"/>
+  <path d="M0 666 161 613l77 18 80-40 106 45 176 17v147H0z" fill="#1b1728"/>
+  <path d="M296 332c-29-28 3-58 9-89 26 41 37 65 9 89z" fill="#f6a763"/>
+  <path d="M309 318c-10-14-5-29 1-43 12 20 17 33 7 43z" fill="#f9d998"/>
+  <path d="M178 416l-13-21m204-53 14-24m57 78 19-9m-322 98-12-9" stroke="#fac38b" stroke-linecap="round" stroke-width="5"/>
+  <rect x="24" y="24" width="552" height="752" rx="10" fill="none" stroke="#e0ac88" opacity=".7"/>
+  <text x="300" y="155" text-anchor="middle" fill="#fce5d0" font-family="Tahoma,Arial,sans-serif" font-size="66" font-weight="700" direction="rtl">عهد الرماد</text>
+  <path d="M236 191h128" stroke="#e0ac88" opacity=".7"/>
+  <text x="300" y="750" text-anchor="middle" fill="#e0ac88" font-family="Georgia,serif" font-size="15" letter-spacing="5">LUX LIBRARY</text>
+</svg>

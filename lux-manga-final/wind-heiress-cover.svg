@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="600" height="800" viewBox="0 0 600 800" role="img" aria-labelledby="title">
+  <title id="title">غلاف وريثة الريح</title>
+  <defs>
+    <linearGradient id="sky" x2="0" y2="1"><stop stop-color="#172838"/><stop offset=".62" stop-color="#537d75"/><stop offset="1" stop-color="#d5a171"/></linearGradient>
+    <linearGradient id="mountain" x2="0" y2="1"><stop stop-color="#354e51"/><stop offset="1" stop-color="#10292d"/></linearGradient>
+    <linearGradient id="fade" x2="0" y2="1"><stop stop-color="#101d29" stop-opacity=".86"/><stop offset="1" stop-color="#101d29" stop-opacity="0"/></linearGradient>
+    <linearGradient id="base" x2="0" y2="1"><stop stop-color="#152c30" stop-opacity="0"/><stop offset="1" stop-color="#0b1a22"/></linearGradient>
+  </defs>
+  <rect width="600" height="800" fill="url(#sky)"/>
+  <circle cx="395" cy="341" r="82" fill="#e8bb82"/>
+  <circle cx="395" cy="341" r="99" fill="none" stroke="#e8bb82" opacity=".36"/>
+  <path d="M0 489 136 318 193 397 296 276 439 444 533 358 600 415V800H0Z" fill="#81988d"/>
+  <path d="M0 495 148 419 194 457 312 360 465 511 600 389V800H0Z" fill="#52746c"/>
+  <path d="M0 412 85 352 175 476 253 526 340 550 444 513 600 424V800H0Z" fill="url(#mountain)"/>
+  <path d="M181 800c17-74 61-115 143-163 65-38 80-57 27-84 78 25 69 56 1 101-63 44-96 89-103 146z" fill="#d2aa78" opacity=".8"/>
+  <path d="M0 490 81 416 144 467 212 630 117 684 0 700Zm600-66-90 57-70 101 57 62 103 15z" fill="#172e33"/>
+  <path d="M0 577 78 559 143 586 106 621 32 657 0 663m600-115-80 30-18 36 98 37" fill="none" stroke="#6b8c7f" stroke-width="3" opacity=".45"/>
+  <g fill="none" stroke="#f7d7a5" stroke-linecap="round" opacity=".52">
+    <path d="M74 378c67-26 119-15 171-3 54 12 110 12 168-8"/>
+    <path d="M168 394c48 1 75 10 118 15s95 3 126-12"/>
+    <path d="M387 457c52-18 99-9 144-25"/>
+  </g>
+  <path d="M302 617q24-8 36 15l23 77-51 14-34-18 13-76z" fill="#222735"/>
+  <path d="M316 626q41 23 83-16-7 28-39 40l-41-11z" fill="#cb7958"/>
+  <circle cx="314" cy="607" r="15" fill="#222735"/>
+  <path d="m301 710-8 34m39-31 9 31" stroke="#17222b" stroke-width="11" stroke-linecap="round"/>
+  <rect width="600" height="310" fill="url(#fade)"/>
+  <path d="M0 698h600v102H0z" fill="url(#base)"/>
+  <rect x="23" y="23" width="554" height="754" rx="11" fill="none" stroke="#e5c393" opacity=".7"/>
+  <rect x="34" y="34" width="532" height="732" rx="8" fill="none" stroke="#e5c393" opacity=".28"/>
+  <path d="m300 67 12 12-12 12-12-12zM233 258h134" fill="none" stroke="#e5c393" stroke-width="2"/>
+  <text x="300" y="154" text-anchor="middle" fill="#fae8c9" font-family="Tahoma,Arial,sans-serif" font-size="55" font-weight="700" direction="rtl">وريثة</text>
+  <text x="300" y="228" text-anchor="middle" fill="#fae8c9" font-family="Tahoma,Arial,sans-serif" font-size="74" font-weight="700" direction="rtl">الريح</text>
+  <text x="300" y="755" text-anchor="middle" fill="#f0d2a5" font-family="Georgia,serif" font-size="15" letter-spacing="5">LUX LIBRARY</text>
+</svg>

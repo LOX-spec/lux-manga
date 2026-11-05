@@ -1,0 +1,14 @@
+{
+  "name": "lux-manga",
+  "version": "3.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": "24.x"
+  },
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "preview": "npm run build && node scripts/preview.mjs",
+    "test": "npm run build && node scripts/verify.mjs"
+  }
+}
