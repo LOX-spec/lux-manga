@@ -10,13 +10,20 @@ read = function(id, index) {
     const url = readerBookmark(book)?.chapter;
     const found = book.chapters.findIndex(chapter => chapter.url === url);
     if (found >= 0) index = found;
-    else if (book.siteId === dexSite && mangaHub.language === 'ar') {
-      index = book.chapters.findIndex(isArabicDexChapter);
-      if (index < 0) { toast('لا توجد فصول عربية متاحة لهذا العمل.'); return; }
-    }
+  }
+  if (book && mediaOf(book) === 'manga' && mangaHub.language && !matchesLibraryChapter(book, book.chapters[index ?? state.progress[id]?.chapter])) {
+    index = book.chapters.findIndex(chapter => matchesLibraryChapter(book, chapter));
+    if (index < 0) { toast('لا توجد فصول متاحة باللغة المختارة.'); return; }
   }
   return readBeforeBookmark(id, index);
 };
+
+function adjacentReadingChapter(book, index, step) {
+  for (let i = index + step; i >= 0 && i < book.chapters.length; i += step) {
+    if (matchesLibraryChapter(book, book.chapters[i])) return i;
+  }
+  return -1;
+}
 
 const drawBeforeComfort = drawReader;
 drawReader = function(book, index) {
