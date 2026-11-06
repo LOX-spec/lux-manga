@@ -83,7 +83,8 @@ export async function source(request) {
   try {
     const body = await request.text();
     if (body.length > 4096) throw new Error('الرابط طويل جدًا');
-    const input = publicURL(JSON.parse(body).url).href;
+    const options = JSON.parse(body);
+    const input = publicURL(options.url).href;
     let result;
     try { result = await remote(input,
       'text/html,application/xhtml+xml,application/xml,application/json,text/xml,text/plain;q=0.8');
@@ -91,7 +92,7 @@ export async function source(request) {
       if (challenge(content)) { const error = new Error('المصدر يعرض صفحة حماية'); error.upstreamStatus = 403; throw error; }
       result.response = new Response(content, {headers: result.response.headers});
     } catch (error) {
-      if (![403,503].includes(error.upstreamStatus)) throw error;
+      if (options.feedOnly || ![403,503].includes(error.upstreamStatus)) throw error;
       const deadline = Date.now() + 24000;
       for (const candidate of alternatives(input)) {
         if (Date.now() >= deadline) break;
