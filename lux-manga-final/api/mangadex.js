@@ -17,7 +17,7 @@ function chapter(item) {
     url: 'https://mangadex.org/chapter/' + item.id,
     number: Number(a.chapter) || 0,
     title: [a.chapter ? 'الفصل ' + a.chapter : 'فصل خاص', a.title, a.translatedLanguage === 'ar' ? 'عربي' : 'English'].filter(Boolean).join(' · '),
-    published: a.publishAt, images: []
+    published: a.publishAt, language: a.translatedLanguage, images: []
   };
 }
 const readable = item => uuid.test(item.id) && item.attributes?.pages > 0 && !item.attributes.externalUrl && !item.attributes.isUnavailable;
@@ -27,7 +27,8 @@ export async function GET(request) {
   const { searchParams } = new URL(request.url);
   const action = searchParams.get('action') || 'latest';
   const id = searchParams.get('id') || '';
-  if (!['latest', 'chapters', 'pages'].includes(action) || (action !== 'latest' && !uuid.test(id))) {
+  const selectedLanguages = searchParams.get('language') === 'ar' ? languages.slice(0, 1) : languages;
+  if (!['latest', 'popular', 'search', 'chapters', 'pages'].includes(action) || (['chapters','pages'].includes(action) && !uuid.test(id))) {
     return Response.json({ error: 'طلب MangaDex غير صالح.' }, { status: 400 });
   }
   const signal = AbortSignal.timeout(12000);
@@ -43,10 +44,20 @@ export async function GET(request) {
     } else if (action === 'chapters') {
       const offset = Number(searchParams.get('offset') || 0);
       if (!Number.isInteger(offset) || offset < 0 || offset > 9900) return Response.json({ error: 'صفحة غير صالحة.' }, { status: 400 });
-      const data = await requestDex('/manga/' + id + '/feed', [...languages, ...ratings, ['limit', 100], ['offset', offset], ['order[chapter]', 'desc']], signal);
+      const data = await requestDex('/manga/' + id + '/feed', [...selectedLanguages, ...ratings, ['limit', 100], ['offset', offset], ['order[chapter]', 'desc']], signal);
       result = { chapters: data.data.filter(readable).map(chapter), next: offset + data.data.length < data.total && data.data.length && offset + data.data.length <= 9900 ? offset + data.data.length : null };
+    } else if (action === 'search' || action === 'popular') {
+      const title = (searchParams.get('q') || '').trim().slice(0, 150);
+      if (action === 'search' && !title) return Response.json({ books: [] });
+      const data = await requestDex('/manga', [
+        ['limit', 24], ...ratings, ['includes[]', 'cover_art'],
+        ...selectedLanguages.map(([, lang]) => ['availableTranslatedLanguage[]', lang]),
+        ...['ja','ko','zh','zh-hk'].map(lang => ['originalLanguage[]', lang]),
+        ...(action === 'search' ? [['title', title], ['order[relevance]', 'desc']] : [['order[followedCount]', 'desc']])
+      ], signal);
+      result = { books: data.data.map(item => work(item, [])) };
     } else {
-      const feeds = await Promise.all(languages.map(language =>
+      const feeds = await Promise.all(selectedLanguages.map(language =>
         requestDex('/chapter', [language, ...ratings, ['limit', 24], ['order[publishAt]', 'desc']], signal)));
       const grouped = new Map();
       for (const item of feeds.flatMap(feed => feed.data).filter(readable)) {
@@ -61,15 +72,22 @@ export async function GET(request) {
         const a = item.attributes;
         const chapters = grouped.get(item.id);
         if (!chapters?.length || !['ja', 'ko', 'zh', 'zh-hk'].includes(a.originalLanguage)) return [];
-        const cover = item.relationships.find(link => link.type === 'cover_art')?.attributes?.fileName;
-        return [{ url: 'https://mangadex.org/title/' + item.id, title: localized(a.title) || 'MangaDex',
-          kind: a.originalLanguage === 'ko' ? 'مانهوا' : a.originalLanguage.startsWith('zh') ? 'مانها' : 'مانجا',
-          description: localized(a.description), genres: (a.tags || []).map(tag => localized(tag.attributes.name)).filter(Boolean),
-          cover: cover ? 'https://uploads.mangadex.org/covers/' + item.id + '/' + encodeURIComponent(cover) + '.256.jpg' : '', chapters }];
+        return [work(item, chapters)];
       }) };
     }
     return Response.json(result, { headers: { 'Cache-Control': action === 'pages' ? 'no-store' : 'public, max-age=60, s-maxage=300' } });
   } catch (error) {
     return Response.json({ error: 'تعذر الاتصال بـ MangaDex الآن.', upstreamStatus: error.status || 0 }, { status: error.status === 429 ? 429 : 502 });
   }
+}
+
+function work(item, chapters) {
+  const a = item.attributes;
+  const cover = item.relationships.find(link => link.type === 'cover_art')?.attributes?.fileName;
+  return {
+    url: 'https://mangadex.org/title/' + item.id, title: localized(a.title) || 'MangaDex',
+    kind: a.originalLanguage === 'ko' ? 'مانهوا' : a.originalLanguage?.startsWith('zh') ? 'مانها' : 'مانجا',
+    description: localized(a.description), genres: (a.tags || []).map(tag => localized(tag.attributes.name)).filter(Boolean),
+    cover: cover ? 'https://uploads.mangadex.org/covers/' + item.id + '/' + encodeURIComponent(cover) + '.256.jpg' : '', chapters
+  };
 }

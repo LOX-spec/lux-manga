@@ -70,5 +70,15 @@
 .manga-reader .manga-page img { display:block; margin:0 auto; }
 .manga-reader .manga-page[hidden] { display:none!important; }
 .manga-reader.rtl-pages { direction:rtl; }
+.manga-hub { margin-block: 0 1.5rem; padding: 1rem; border: 1px solid var(--line); border-radius: 16px; }
+.manga-hub form input[type="search"] { min-inline-size: 0; flex: 1 1 12rem; }
+.manga-hub-presets { margin-block: 1rem; }
+.manga-hub-presets [hidden], #siteForm[hidden], #smartImport[hidden] { display: none !important; }
+.manga-resume { margin-block-start: .5rem; }
+.comfort-reader-tools { position: sticky; inset-block-start: .5rem; z-index: 5; display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: .35rem; margin: .5rem auto; padding: .45rem; width: fit-content; max-width: 100%; border-radius: 12px; background: #181818ed; color: #fff; }
+.comfort-reader-tools output { padding-inline: .5rem; }
+.studio .manga-reader.webtoon-continuous { gap: 0; padding: 0; }
+.studio .manga-reader.webtoon-continuous img { width: 100%; height: auto; aspect-ratio: auto 2 / 3; margin: 0; border-radius: 0; }
+.reader-clean .comfort-reader-tools, .reader-clean .reader-tools, .reader-clean .reader-utility, .reader-clean .reader-heading, .reader-clean .chapter-end, .reader-clean #close { display: none !important; }
 #smartImport { margin-top:1rem; padding:1rem; border:1px solid var(--line); border-radius:16px; }
 #smartImport textarea { width:100%; font:inherit; }

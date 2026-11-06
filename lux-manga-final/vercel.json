@@ -8,7 +8,7 @@
       "includeFiles": "*.{html,js,css,svg}"
     },
     "api/source.js": {
-      "maxDuration": 30
+      "maxDuration": 45
     },
     "api/image.js": {
       "maxDuration": 30

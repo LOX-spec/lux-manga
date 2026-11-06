@@ -6,8 +6,8 @@ const dexId = (value, type) => {
     return url.origin === 'https://mangadex.org' && section === type && /^[a-f0-9-]{36}$/i.test(id) ? id : '';
   } catch { return ''; }
 };
-async function dexRequest(action, id = '', offset = 0) {
-  const params = new URLSearchParams({ action, id, offset });
+async function dexRequest(action, id = '', offset = 0, language = '', q = '') {
+  const params = new URLSearchParams({ action, id, offset, language, q });
   const response = await fetch('/api/mangadex?' + params, { signal: AbortSignal.timeout(15000) });
   const data = await response.json();
   if (!response.ok) throw Error(data.error || 'تعذر الاتصال بـ MangaDex.');
@@ -53,10 +53,10 @@ loadChapter = async function(chapter, options) {
   return chapter;
 };
 
-async function refreshDexBook(book) {
+async function refreshDexBook(book, language = '') {
   let offset = 0;
   do {
-    const result = await dexRequest('chapters', dexId(book.source, 'title'), offset);
+    const result = await dexRequest('chapters', dexId(book.source, 'title'), offset, language);
     upsertWork({ ...book, url: book.source, chapters: result.chapters }, dexSite);
     offset = result.next;
   } while (offset !== null && offset < 500);
@@ -67,18 +67,20 @@ const previousDetail = detail;
 detail = function(id) {
   previousDetail(id);
   const book = get(id);
-  if (book?.siteId !== dexSite || Date.now() - (book.dexCheckedAt || 0) < 300000) return;
+  const language = mangaHub.language;
+  if (book?.siteId !== dexSite || (book.dexCheckedLanguage === language && Date.now() - (book.dexCheckedAt || 0) < 300000)) return;
   book.dexCheckedAt = Date.now();
-  refreshDexBook(book).then(() => {
+  book.dexCheckedLanguage = language;
+  refreshDexBook(book, language).then(() => {
     const modal = $('#modal');
     if (modal?.open && modal.querySelector('[data-refresh="' + id + '"]')) previousDetail(id);
   }).catch(() => { book.dexCheckedAt = 0; });
 };
 
-async function fetchPublicFeed(url) {
+async function fetchPublicFeed(url, useProxy = false) {
   const response = await fetch('/api/source', {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ url, feedOnly: true }), signal: AbortSignal.timeout(19000)
+    body: JSON.stringify({ url, feedOnly: !useProxy }), signal: AbortSignal.timeout(useProxy ? 45000 : 19000)
   });
   if (!response.ok) return null;
   return response.json();
@@ -122,14 +124,14 @@ function refreshExternalFeed(site) {
   const run = (async () => {
     const base = site.url;
     const paths = ['/wp-json/wp/v2/manga?per_page=30&_embed=1', '/wp-json/', '/feed/'];
-    const data = await Promise.all(paths.map(path => fetchPublicFeed(new URL(path, base)).catch(() => null)));
+    const data = await Promise.all(paths.map(path => fetchPublicFeed(new URL(path, base), site.useFeedProxy).catch(() => null)));
     let routes = [];
     try {
       routes = Object.keys(JSON.parse(data[1]?.content).routes || {}).filter(route =>
         /^\/wp\/v2\/(?:manga|manhwa|manhua|wp-manga|comics?|novels?)$/.test(route) && route !== '/wp/v2/manga');
     } catch {}
     const extra = await Promise.all(routes.slice(0, 3).map(route =>
-      fetchPublicFeed(new URL('/wp-json' + route + '?per_page=30&_embed=1', base)).catch(() => null)));
+      fetchPublicFeed(new URL('/wp-json' + route + '?per_page=30&_embed=1', base), site.useFeedProxy).catch(() => null)));
     const found = new Map();
     for (const page of [data[2], ...extra, data[0]]) {
       for (const book of feedRecords(page, site.contentType)) {
@@ -167,6 +169,7 @@ addSite = async function(value) {
     if (!contentType || contentType === 'auto') contentType = view === 'novels' ? 'novels' : ['comics','dc','marvel','comic-other'].includes(view) ? 'comics' : 'manga';
     const site = state.sites.find(item => item.url === url && item.contentType === contentType) ||
       { id: 's' + crypto.randomUUID(), url, entryUrl: url, name: new URL(url).hostname, contentType, queue: [], seen: [], failed: [], done: 0 };
+    site.useFeedProxy = $('#sourcePreset')?.value === 'proxy';
     const count = await refreshExternalFeed(site);
     $('#modal').close();
     go('sites');
@@ -180,7 +183,7 @@ addSite = async function(value) {
 const previousRefresh = refreshBook;
 refreshBook = async function(id) {
   const book = get(id);
-  if (book?.siteId === dexSite) return refreshDexBook(book);
+  if (book?.siteId === dexSite) return refreshDexBook(book, mangaHub.language);
   const site = state.sites.find(item => item.id === book?.siteId && item.feedOnly);
   if (site) { await refreshExternalFeed(site); return get(id); }
   return previousRefresh(id);

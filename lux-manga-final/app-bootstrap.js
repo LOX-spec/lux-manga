@@ -9,7 +9,7 @@ const applicationScripts = [
   'novel-reader.js', 'media.js', 'discovery.js', 'scanner.js', 'source-delete.js',
   'collections.js', 'novels-demo.js', 'novel-publications.js', 'novel-pages.js',
   'novel-admin.js', 'novels-view.js', 'studio.js', 'comicverse-data.js',
-  'comicverse-source.js', 'comics-model.js', 'comics-hub.js', 'manga-samples.js', 'smart-import.js', 'universal-backup.js', 'automatic-sources.js', 'install.js'
+  'comicverse-source.js', 'comics-model.js', 'comics-hub.js', 'manga-samples.js', 'smart-import.js', 'universal-backup.js', 'automatic-sources.js', 'manga-hub.js', 'comfort-reader.js', 'install.js'
 ];
 
 if (novelPage) {

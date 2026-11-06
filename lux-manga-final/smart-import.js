@@ -60,23 +60,6 @@ document.addEventListener('submit', async event => {
     $('#modal').close(); go('sites'); toast('حُفظ المحتوى المستورد؛ افحص الروابط المتاحة من مصادرك.');
   } catch(error) { $('#smartError').textContent = error.message; } finally {button.disabled=false;}
 });
-const smartDrawReader = drawReader;
-drawReader = function(book,index) {
-  smartDrawReader(book,index); if (mediaOf(book)==='novels') return;
-  const reader = $('#modal .manga-reader'); if (!reader) return;
-  let mode = 'vertical'; try {mode=localStorage.getItem('lux.manga.mode') || mode;} catch {}
-  const pages = [...reader.querySelectorAll('.manga-page')]; let page=0;
-  const tools = document.createElement('div'); tools.className='reader-tools';
-  tools.innerHTML='<button type="button" data-mode-toggle>تبديل وضع القراءة</button><label>طريقة القراءة <select aria-label="طريقة قراءة المانجا"><option value="vertical">ويبتون · تمرير عمودي</option><option value="rtl">مانجا · صفحات من اليمين لليسار</option></select></label><button type="button" data-page-prev>→ الصفحة السابقة</button><output aria-live="polite" dir="ltr"></output><button type="button" data-page-next>الصفحة التالية ←</button>';
-  reader.before(tools); const select=tools.querySelector('select'); select.value=mode;
-  function update(){reader.classList.toggle('rtl-pages',mode==='rtl');pages.forEach((node,i)=>{node.hidden=mode==='rtl'&&i!==page;const image=node.querySelector('img');image.loading=mode==='rtl'?(i===page?'eager':'lazy'):(i<2?'eager':'lazy');image.decoding='async';if(!image.getAttribute('src')&&(mode==='vertical'||Math.abs(i-page)<=1))image.src=image.dataset.readerSrc;});tools.querySelector('output').textContent=(page+1)+' / '+pages.length;tools.querySelector('[data-page-prev]').disabled=page===0;tools.querySelector('[data-page-next]').disabled=page===pages.length-1;tools.querySelectorAll('[data-page-prev],[data-page-next],output').forEach(node=>node.hidden=mode!=='rtl');tools.querySelector('[data-mode-toggle]').textContent=mode==='vertical'?'⇄ الانتقال إلى صفحات RTL':'↕ الانتقال إلى Webtoon Scroll';}
-  pages.forEach(node=>{const image=node.querySelector('img');image.dataset.readerSrc=image.getAttribute('src');if(mode==='rtl')image.removeAttribute('src');});
-  select.onchange=()=>{mode=select.value;try{localStorage.setItem('lux.manga.mode',mode);}catch{}update();};
-  tools.querySelector('[data-mode-toggle]').onclick=()=>{select.value=mode==='vertical'?'rtl':'vertical';select.onchange();};
-  tools.querySelector('[data-page-prev]').onclick=()=>{page=Math.max(0,page-1);update();};
-  tools.querySelector('[data-page-next]').onclick=()=>{page=Math.min(pages.length-1,page+1);update();}; update();
-};
-
 const smartRender = render;
 render = function() {
  if (state.preferences?.mangaSamplesVersion !== 2) {
