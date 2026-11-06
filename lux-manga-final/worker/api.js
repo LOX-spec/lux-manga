@@ -141,7 +141,14 @@ export async function image(request) {
     const url = new URL(request.url);
     const input=publicURL(url.searchParams.get('url')).href;
     let result;
-    try {result=await remote(input,'image/avif,image/webp,image/png,image/jpeg,image/gif');}
+    const target = new URL(input);
+    if (target.hostname === 'uploads.mangadex.org' && target.pathname.startsWith('/covers/')) {
+      const signal = AbortSignal.timeout(12000);
+      const response = await fetch(target, { signal, redirect: 'error' });
+      if (!response.ok) { await response.body?.cancel(); throw Error('تعذر تحميل غلاف MangaDex.'); }
+      result = { response, signal };
+    }
+    try {result ??= await remote(input,'image/avif,image/webp,image/png,image/jpeg,image/gif');}
     catch(error){
       if(![403,503].includes(error.upstreamStatus))throw error;
       for(const candidate of alternatives(input).filter(route=>['corsproxy','allorigins'].includes(route.method))){

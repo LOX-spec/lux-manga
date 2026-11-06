@@ -41,17 +41,65 @@ async function updateDex() {
 }
 
 const previousReaderLoad = loadChapter;
-loadChapter = async function(chapter, options) {
-  const id = dexId(chapter.url, 'chapter');
-  if (!id) return previousReaderLoad(chapter, options);
-  if (chapter.images?.length && (state.downloads[chapter.url] || Date.now() - (chapter.pagesFetchedAt || 0) < 600000)) return chapter;
-  const { images } = await dexRequest('pages', id);
+async function fetchDexPages(chapter) {
+  const { images } = await dexRequest('pages', dexId(chapter.url, 'chapter'));
   if (!images.length) throw Error('لا توجد صور متاحة لهذا الفصل على MangaDex.');
   chapter.images = images;
   chapter.pagesFetchedAt = Date.now();
+  chapter.fullManifest = true;
   await save();
+  return images;
+}
+
+loadChapter = async function(chapter, options) {
+  const id = dexId(chapter.url, 'chapter');
+  if (!id) return previousReaderLoad(chapter, options);
+  if (chapter.images?.length && (state.downloads[chapter.url] || (chapter.fullManifest && Date.now() - (chapter.pagesFetchedAt || 0) < 600000))) return chapter;
+  await fetchDexPages(chapter);
   return chapter;
 };
+
+function bindDexReaderImages(chapter) {
+  const container = $('#modal .manga-reader');
+  let refreshed;
+  const refresh = () => refreshed ??= fetchDexPages(chapter);
+  container.querySelectorAll('.manga-page').forEach((page, index) => {
+    const img = page.querySelector('img');
+    const message = page.querySelector('.image-failure');
+    const retry = message.querySelector('button');
+    let attempt = 0;
+    async function recover() {
+      if (!img.getAttribute('src')) return;
+      if (attempt++ === 0 && navigator.onLine !== false && !img.getAttribute('src').startsWith('/api/image?')) {
+        img.src = proxy(chapter.images[index]);
+        return;
+      }
+      if (attempt <= 2 && navigator.onLine !== false) {
+        attempt = 3;
+        try {
+          const images = await refresh();
+          if (!img.isConnected) return;
+          if (images[index]) {
+            img.src = images[index];
+            message.querySelector('a').href = images[index];
+            return;
+          }
+        } catch {}
+      }
+      img.hidden = true;
+      message.hidden = false;
+    }
+    img.addEventListener('error', recover);
+    img.addEventListener('load', () => { img.hidden = false; message.hidden = true; });
+    retry.onclick = () => {
+      refreshed = undefined;
+      attempt = 1;
+      message.hidden = true;
+      img.hidden = false;
+      void recover();
+    };
+  });
+}
 
 async function refreshDexBook(book, language = '') {
   let offset = 0;

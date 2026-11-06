@@ -38,9 +38,13 @@ export async function GET(request) {
       const data = await requestDex('/at-home/server/' + id, [['forcePort443', 'true']], signal);
       const base = new URL(data.baseUrl);
       if (base.protocol !== 'https:' || base.username || base.password || base.port) throw Error('Invalid image host');
-      const files = data.chapter.dataSaver?.length ? data.chapter.dataSaver : data.chapter.data;
-      const folder = data.chapter.dataSaver?.length ? 'data-saver' : 'data';
-      result = { images: files.map(file => base.href.replace(/\/$/, '') + '/' + folder + '/' + encodeURIComponent(data.chapter.hash) + '/' + encodeURIComponent(file)) };
+      const { data: full, dataSaver, hash } = data.chapter;
+      const useSaver = searchParams.get('quality') === 'saver' && dataSaver?.length > 0 &&
+        (!full?.length || dataSaver.length === full.length);
+      const files = useSaver || !full?.length ? dataSaver : full;
+      const folder = files === full ? 'data' : 'data-saver';
+      if (!files?.length || !hash) throw Error('Chapter has no page manifest');
+      result = { images: files.map(file => base.href.replace(/\/$/, '') + '/' + folder + '/' + encodeURIComponent(hash) + '/' + encodeURIComponent(file)) };
     } else if (action === 'chapters') {
       const offset = Number(searchParams.get('offset') || 0);
       if (!Number.isInteger(offset) || offset < 0 || offset > 9900) return Response.json({ error: 'صفحة غير صالحة.' }, { status: 400 });
