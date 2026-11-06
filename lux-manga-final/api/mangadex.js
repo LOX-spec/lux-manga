@@ -1,7 +1,9 @@
 const uuid = /^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i;
 const api = 'https://api.mangadex.org';
-const languages = [['translatedLanguage[]', 'ar'], ['translatedLanguage[]', 'en']];
 const ratings = [['contentRating[]', 'safe'], ['contentRating[]', 'suggestive']];
+const pageSize = 50;
+const windowLimit = 10000;
+const languageNames = new Intl.DisplayNames(['ar'], { type: 'language' });
 
 async function requestDex(path, params, signal) {
   const response = await fetch(api + path + (params ? '?' + new URLSearchParams(params) : ''), {
@@ -16,9 +18,13 @@ function chapter(item) {
   return {
     url: 'https://mangadex.org/chapter/' + item.id,
     number: Number(a.chapter) || 0,
-    title: [a.chapter ? 'الفصل ' + a.chapter : 'فصل خاص', a.title, a.translatedLanguage === 'ar' ? 'عربي' : 'English'].filter(Boolean).join(' · '),
+    title: [a.chapter ? 'الفصل ' + a.chapter : 'فصل خاص', a.title, chapterLanguage(a.translatedLanguage)].filter(Boolean).join(' · '),
     published: a.publishAt, language: a.translatedLanguage, images: []
   };
+}
+function chapterLanguage(code) {
+  if (code === 'ar') return 'عربي';
+  try { return code ? languageNames.of(code) : ''; } catch { return code; }
 }
 const readable = item => uuid.test(item.id) && item.attributes?.pages > 0 && !item.attributes.externalUrl && !item.attributes.isUnavailable;
 const localized = value => value?.ar || value?.en || Object.values(value || {})[0] || '';
@@ -27,8 +33,11 @@ export async function GET(request) {
   const { searchParams } = new URL(request.url);
   const action = searchParams.get('action') || 'latest';
   const id = searchParams.get('id') || '';
-  const selectedLanguages = searchParams.get('language') === 'ar' ? languages.slice(0, 1) : languages;
-  if (!['latest', 'popular', 'search', 'chapters', 'pages'].includes(action) || (['chapters','pages'].includes(action) && !uuid.test(id))) {
+  const arabic = searchParams.get('language') === 'ar';
+  const selectedLanguages = arabic ? [['translatedLanguage[]', 'ar']] : [];
+  const original = searchParams.get('type');
+  const origins = ['ja', 'ko'].includes(original) ? [original] : ['ja', 'ko', 'zh', 'zh-hk'];
+  if (!['latest', 'catalog', 'popular', 'rated', 'search', 'chapters', 'pages'].includes(action) || (['chapters','pages'].includes(action) && !uuid.test(id))) {
     return Response.json({ error: 'طلب MangaDex غير صالح.' }, { status: 400 });
   }
   const signal = AbortSignal.timeout(12000);
@@ -50,32 +59,54 @@ export async function GET(request) {
       if (!Number.isInteger(offset) || offset < 0 || offset > 9900) return Response.json({ error: 'صفحة غير صالحة.' }, { status: 400 });
       const data = await requestDex('/manga/' + id + '/feed', [...selectedLanguages, ...ratings, ['limit', 100], ['offset', offset], ['order[chapter]', 'desc']], signal);
       result = { chapters: data.data.filter(readable).map(chapter), next: offset + data.data.length < data.total && data.data.length && offset + data.data.length <= 9900 ? offset + data.data.length : null };
-    } else if (action === 'search' || action === 'popular') {
+    } else if (action !== 'latest') {
       const title = (searchParams.get('q') || '').trim().slice(0, 150);
-      if (action === 'search' && !title) return Response.json({ books: [] });
+      const offset = Number(searchParams.get('offset') || 0);
+      const since = searchParams.get('since') || '';
+      if (!Number.isInteger(offset) || offset < 0 || offset >= windowLimit ||
+          (since && (action !== 'catalog' || !/^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d$/.test(since) || !Number.isFinite(Date.parse(since + 'Z'))))) {
+        return Response.json({ error: 'صفحة غير صالحة.' }, { status: 400 });
+      }
+      if (action === 'search' && !title) return Response.json({ books: [], next: null, total: 0 });
+      const order = { catalog: 'createdAt', search: 'relevance', popular: 'followedCount', rated: 'rating' }[action];
       const data = await requestDex('/manga', [
-        ['limit', 24], ...ratings, ['includes[]', 'cover_art'],
-        ...selectedLanguages.map(([, lang]) => ['availableTranslatedLanguage[]', lang]),
-        ...['ja','ko','zh','zh-hk'].map(lang => ['originalLanguage[]', lang]),
-        ...(action === 'search' ? [['title', title], ['order[relevance]', 'desc']] : [['order[followedCount]', 'desc']])
+        ['limit', Math.min(pageSize, windowLimit - offset)], ['offset', offset], ...ratings, ['includes[]', 'cover_art'],
+        ...(arabic ? [['availableTranslatedLanguage[]', 'ar']] : []),
+        ...origins.map(lang => ['originalLanguage[]', lang]),
+        ['order[' + order + ']', action === 'catalog' ? 'asc' : 'desc'],
+        ...(action === 'search' ? [['title', title]] : []),
+        ...(since ? [['createdAtSince', since]] : [])
       ], signal);
-      result = { books: data.data.map(item => work(item, [])) };
+      const end = offset + data.data.length;
+      let next = null;
+      if (data.data.length && end < data.total) {
+        if (end < windowLimit) next = { offset: end, since };
+        else if (action === 'catalog') {
+          // Overlap the timestamp boundary so titles sharing the same second remain reachable.
+          const last = Date.parse(data.data.at(-1).attributes.createdAt);
+          if (Number.isFinite(last)) {
+            const boundary = new Date(last - 1000).toISOString().slice(0, 19);
+            if (!since || boundary > since) next = { offset: 0, since: boundary };
+          }
+        }
+      }
+      result = { books: data.data.map(item => work(item, [])), next, total: data.total };
     } else {
-      const feeds = await Promise.all(selectedLanguages.map(language =>
-        requestDex('/chapter', [language, ...ratings, ['limit', 24], ['order[publishAt]', 'desc']], signal)));
+      const feed = await requestDex('/chapter', [...selectedLanguages, ...ratings,
+        ...origins.map(lang => ['originalLanguage[]', lang]), ['limit', 50], ['order[publishAt]', 'desc']], signal);
       const grouped = new Map();
-      for (const item of feeds.flatMap(feed => feed.data).filter(readable)) {
+      for (const item of feed.data.filter(readable)) {
         const manga = item.relationships.find(link => link.type === 'manga')?.id;
         if (!uuid.test(manga || '')) continue;
         if (!grouped.has(manga)) grouped.set(manga, []);
         grouped.get(manga).push(chapter(item));
       }
-      const ids = [...grouped.keys()].slice(0, 32);
+      const ids = [...grouped.keys()];
       const works = ids.length ? await requestDex('/manga', [['limit', ids.length], ...ratings, ['includes[]', 'cover_art'], ...ids.map(value => ['ids[]', value])], signal) : { data: [] };
       result = { books: works.data.flatMap(item => {
         const a = item.attributes;
         const chapters = grouped.get(item.id);
-        if (!chapters?.length || !['ja', 'ko', 'zh', 'zh-hk'].includes(a.originalLanguage)) return [];
+        if (!chapters?.length || !origins.includes(a.originalLanguage)) return [];
         return [work(item, chapters)];
       }) };
     }

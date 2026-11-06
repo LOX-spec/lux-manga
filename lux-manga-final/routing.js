@@ -4,7 +4,7 @@ export function normalizeRoute(input) {
     try { return decodeURIComponent(part); } catch { return part; }
   };
   const path = url.pathname.replace(/\/$/, '') || '/';
-  const sections = { '/novels': 'novels', '/admin': 'admin' };
+  const sections = { '/novels': 'novels', '/admin': 'admin', '/catalog': 'catalog' };
   const novel = /^\/novel\/([^/]+)$/.exec(path);
   const reader = /^\/reader\/([^/]+)(?:\/([^/]+))?$/.exec(path);
   if (sections[path]) url.searchParams.set('view', sections[path]);

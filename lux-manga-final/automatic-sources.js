@@ -6,8 +6,8 @@ const dexId = (value, type) => {
     return url.origin === 'https://mangadex.org' && section === type && /^[a-f0-9-]{36}$/i.test(id) ? id : '';
   } catch { return ''; }
 };
-async function dexRequest(action, id = '', offset = 0, language = '', q = '') {
-  const params = new URLSearchParams({ action, id, offset, language, q });
+async function dexRequest(action, id = '', offset = 0, language = '', q = '', { type = '', since = '' } = {}) {
+  const params = new URLSearchParams({ action, id, offset, language, q, type, since });
   const response = await fetch('/api/mangadex?' + params, { signal: AbortSignal.timeout(15000) });
   const data = await response.json();
   if (!response.ok) throw Error(data.error || 'تعذر الاتصال بـ MangaDex.');
@@ -28,7 +28,7 @@ async function updateDex() {
         const saved = upsertWork(book, dexSite);
         saved.updated = book.chapters.reduce((latest, chapter) => chapter.published > latest ? chapter.published : latest, '');
       }
-      dexStatus = books.length ? 'أحدث الفصول المترجمة من MangaDex · عربي وEnglish' : 'لم ترسل MangaDex فصولًا مطابقة الآن.';
+      dexStatus = books.length ? 'أحدث الفصول من MangaDex' : 'لم ترسل MangaDex فصولًا مطابقة الآن.';
       await save();
     } catch {
       dexStatus = 'تعذر تحديث MangaDex الآن. تبقى الأعمال المحفوظة متاحة.';
@@ -251,9 +251,9 @@ render = function() {
   previousAutoRender();
   if (['home','catalog','new','updates'].includes(view)) {
     $('#page')?.insertAdjacentHTML('afterbegin', '<p class="note" role="status">' + esc(dexStatus) + '</p>');
-    if (db) void updateDex();
+    if (db && view !== 'catalog') void updateDex();
   }
 };
 setInterval(() => {
-  if (!document.hidden && ['home','catalog','new','updates'].includes(view)) void updateDex();
+  if (!document.hidden && ['home','new','updates'].includes(view)) void updateDex();
 }, 300000);

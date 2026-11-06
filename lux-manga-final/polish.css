@@ -74,6 +74,8 @@
 .manga-hub form input[type="search"] { min-inline-size: 0; flex: 1 1 12rem; }
 .manga-hub-presets { margin-block: 1rem; }
 .manga-hub-presets [hidden], #siteForm[hidden], #smartImport[hidden] { display: none !important; }
+#manga-hub-pagination[hidden] { display: none; }
+#manga-hub-pagination { margin-block-start: 1rem; justify-content: center; }
 .manga-resume { margin-block-start: .5rem; }
 .comfort-reader-tools { position: sticky; inset-block-start: .5rem; z-index: 5; display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: .35rem; margin: .5rem auto; padding: .45rem; width: fit-content; max-width: 100%; border-radius: 12px; background: #181818ed; color: #fff; }
 .comfort-reader-tools output { padding-inline: .5rem; }
