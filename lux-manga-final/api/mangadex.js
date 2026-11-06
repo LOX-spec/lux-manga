@@ -1,3 +1,6 @@
+import { publicURL } from '../worker/api.js';
+import { fetchPublic } from '../worker/public-fetch.js';
+
 const uuid = /^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i;
 const api = 'https://api.mangadex.org';
 const ratings = [['contentRating[]', 'safe'], ['contentRating[]', 'suggestive']];
@@ -28,6 +31,32 @@ function chapterLanguage(code) {
 }
 const readable = item => uuid.test(item.id) && item.attributes?.pages > 0 && !item.attributes.externalUrl && !item.attributes.isUnavailable;
 const localized = value => value?.ar || value?.en || Object.values(value || {})[0] || '';
+const allowedWork = item => ['safe', 'suggestive'].includes(item?.attributes?.contentRating) &&
+  !(item.attributes.tags || []).some(tag => Object.values(tag.attributes?.name || {}).some(name => /^hentai$/i.test(name.trim())));
+
+async function requireAllowedWork(id, signal) {
+  const { data } = await requestDex('/manga/' + id, null, signal);
+  if (!allowedWork(data)) throw Object.assign(new Error('Work excluded by content policy'), { contentBlocked: true });
+}
+
+async function checkHealth(signal, chapterId) {
+  const { data } = await requestDex('/manga', [['limit', 10], ...ratings, ['includes[]', 'cover_art']], signal);
+  const cover = data.filter(allowedWork).map(item => work(item, []).cover).find(Boolean);
+  if (!cover) return { api: true, images: false };
+  try {
+    const response = await fetch(cover, { signal, redirect: 'error', headers: { Range: 'bytes=0-1023' } });
+    const images = response.ok && /^image\//i.test(response.headers.get('content-type') || '');
+    await response.body?.cancel();
+    if (!images || !chapterId) return { api: true, images };
+    const data = await requestDex('/at-home/server/' + chapterId, [['forcePort443', 'true']], signal);
+    const first = data.chapter?.data?.[0];
+    if (!first || !data.chapter.hash) return { api: true, images: false };
+    const page = publicURL(new URL('/data/' + encodeURIComponent(data.chapter.hash) + '/' + encodeURIComponent(first), data.baseUrl));
+    const probe = await fetchPublic(page, { signal, accept: 'image/*' });
+    await probe.body?.cancel();
+    return { api: true, images: probe.ok && /^image\//i.test(probe.headers.get('content-type') || '') };
+  } catch { return { api: true, images: false }; }
+}
 
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
@@ -37,13 +66,20 @@ export async function GET(request) {
   const selectedLanguages = arabic ? [['translatedLanguage[]', 'ar']] : [];
   const original = searchParams.get('type');
   const origins = ['ja', 'ko'].includes(original) ? [original] : ['ja', 'ko', 'zh', 'zh-hk'];
-  if (!['latest', 'catalog', 'popular', 'rated', 'search', 'chapters', 'pages'].includes(action) || (['chapters','pages'].includes(action) && !uuid.test(id))) {
+  if (!['latest', 'catalog', 'popular', 'rated', 'search', 'chapters', 'pages', 'health'].includes(action) || (['chapters','pages'].includes(action) && !uuid.test(id))) {
     return Response.json({ error: 'طلب MangaDex غير صالح.' }, { status: 400 });
   }
   const signal = AbortSignal.timeout(12000);
   try {
     let result;
-    if (action === 'pages') {
+    if (action === 'health') {
+      if (id && !uuid.test(id)) return Response.json({ error: 'معرّف فصل غير صالح.' }, { status: 400 });
+      result = await checkHealth(signal, id);
+    } else if (action === 'pages') {
+      const { data: entry } = await requestDex('/chapter/' + id, null, signal);
+      const parent = entry?.relationships?.find(link => link.type === 'manga')?.id;
+      if (!uuid.test(parent || '')) throw Error('Missing chapter parent');
+      await requireAllowedWork(parent, signal);
       const data = await requestDex('/at-home/server/' + id, [['forcePort443', 'true']], signal);
       const base = new URL(data.baseUrl);
       if (base.protocol !== 'https:' || base.username || base.password || base.port) throw Error('Invalid image host');
@@ -57,8 +93,9 @@ export async function GET(request) {
     } else if (action === 'chapters') {
       const offset = Number(searchParams.get('offset') || 0);
       if (!Number.isInteger(offset) || offset < 0 || offset > 9900) return Response.json({ error: 'صفحة غير صالحة.' }, { status: 400 });
+      await requireAllowedWork(id, signal);
       const data = await requestDex('/manga/' + id + '/feed', [...selectedLanguages, ...ratings, ['limit', 100], ['offset', offset], ['order[chapter]', 'desc']], signal);
-      result = { chapters: data.data.filter(readable).map(chapter), next: offset + data.data.length < data.total && data.data.length && offset + data.data.length <= 9900 ? offset + data.data.length : null };
+      result = { chapters: data.data.filter(readable).map(chapter), total: data.total, complete: offset + data.data.length >= data.total, next: offset + data.data.length < data.total && data.data.length && offset + data.data.length <= 9900 ? offset + data.data.length : null };
     } else if (action !== 'latest') {
       const title = (searchParams.get('q') || '').trim().slice(0, 150);
       const offset = Number(searchParams.get('offset') || 0);
@@ -90,7 +127,7 @@ export async function GET(request) {
           }
         }
       }
-      result = { books: data.data.map(item => work(item, [])), next, total: data.total };
+      result = { books: data.data.filter(allowedWork).map(item => work(item, [])), next, total: data.total };
     } else {
       const feed = await requestDex('/chapter', [...selectedLanguages, ...ratings,
         ...origins.map(lang => ['originalLanguage[]', lang]), ['limit', 50], ['order[publishAt]', 'desc']], signal);
@@ -103,16 +140,17 @@ export async function GET(request) {
       }
       const ids = [...grouped.keys()];
       const works = ids.length ? await requestDex('/manga', [['limit', ids.length], ...ratings, ['includes[]', 'cover_art'], ...ids.map(value => ['ids[]', value])], signal) : { data: [] };
-      result = { books: works.data.flatMap(item => {
+      result = { books: works.data.filter(allowedWork).flatMap(item => {
         const a = item.attributes;
         const chapters = grouped.get(item.id);
         if (!chapters?.length || !origins.includes(a.originalLanguage)) return [];
         return [work(item, chapters)];
       }) };
     }
-    return Response.json(result, { headers: { 'Cache-Control': action === 'pages' ? 'no-store' : 'public, max-age=60, s-maxage=300' } });
+    return Response.json(result, { headers: { 'Cache-Control': ['pages','health'].includes(action) ? 'no-store' : 'public, max-age=60, s-maxage=300' } });
   } catch (error) {
-    return Response.json({ error: 'تعذر الاتصال بـ MangaDex الآن.', upstreamStatus: error.status || 0 }, { status: error.status === 429 ? 429 : 502 });
+    const status = error.contentBlocked ? 403 : error.status === 429 ? 429 : 502;
+    return Response.json({ error: status === 403 ? 'هذا العمل محجوب بفلتر المحتوى.' : 'تعذر الاتصال بـ MangaDex الآن.', upstreamStatus: error.status || 0 }, { status });
   }
 }
 
@@ -123,6 +161,7 @@ function work(item, chapters) {
     url: 'https://mangadex.org/title/' + item.id, title: localized(a.title) || 'MangaDex',
     kind: a.originalLanguage === 'ko' ? 'مانهوا' : a.originalLanguage?.startsWith('zh') ? 'مانها' : 'مانجا',
     description: localized(a.description), genres: (a.tags || []).map(tag => localized(tag.attributes.name)).filter(Boolean),
+    contentRating: a.contentRating,
     cover: cover ? 'https://uploads.mangadex.org/covers/' + item.id + '/' + encodeURIComponent(cover) + '.256.jpg' : '', chapters
   };
 }

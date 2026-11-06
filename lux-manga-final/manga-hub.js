@@ -1,5 +1,9 @@
+function readLibraryLanguage() {
+  try { return localStorage.getItem('lux.library.language') === 'ar' ? 'ar' : ''; }
+  catch { return ''; }
+}
 const mangaHub = {
-  action: 'catalog', type: '', language: '', query: '', activeQuery: '',
+  action: 'catalog', type: '', language: readLibraryLanguage(), query: '', activeQuery: '',
   ids: [], message: '', revision: 0, pages: [], page: 0,
   loading: false, started: false, total: null, seen: new Set()
 };
@@ -54,6 +58,7 @@ async function browseMangaDex(action, cursor = { offset: 0, since: '' }, append 
   } catch (error) {
     if (revision !== mangaHub.revision) return;
     mangaHub.message = error.message;
+    flagDexOutage();
     if (!append && action === 'catalog') {
       mangaHub.ids = books().filter(book => book.siteId === dexSite &&
         (!mangaHub.type || book.kind === (mangaHub.type === 'ja' ? 'مانجا' : 'مانهوا')) &&
@@ -79,13 +84,18 @@ function showMangaHubPage(index) {
 const mountHubAfterRender = render;
 render = function() {
   mountHubAfterRender();
+  if (db && !dexHealthStarted) {
+    dexHealthStarted = true;
+    void monitorDexHealth();
+  }
   if (view !== 'catalog') return;
   $('#page').insertAdjacentHTML('afterbegin', `<section class="manga-hub" aria-label="تصفح MangaDex">
     <h2>MangaDex</h2>
     <form id="manga-hub-form" class="actions">
       <input name="title" type="search" maxlength="150" aria-label="عنوان المانجا في MangaDex" placeholder="ابحث في MangaDex" value="${esc(mangaHub.query)}" required>
       <button class="primary">بحث</button>
-      <label><input id="manga-hub-ar" type="checkbox" ${mangaHub.language === 'ar' ? 'checked' : ''}> ترجمات عربية فقط</label>
+      <label for="manga-hub-ar">لغة المكتبة</label>
+      <select id="manga-hub-ar"><option value="" ${mangaHub.language ? '' : 'selected'}>كل اللغات</option><option value="ar" ${mangaHub.language === 'ar' ? 'selected' : ''}>المكتبة العربية فقط</option></select>
     </form>
     <div class="actions">
       <label for="manga-hub-type">نوع العمل</label>
@@ -128,7 +138,11 @@ document.addEventListener('submit', event => {
   if (mangaHub.query) void browseMangaDex('search');
 });
 document.addEventListener('change', event => {
-  if (event.target.id === 'manga-hub-ar') mangaHub.language = event.target.checked ? 'ar' : '';
+  if (event.target.id === 'manga-hub-ar') {
+    mangaHub.language = event.target.value === 'ar' ? 'ar' : '';
+    try { localStorage.setItem('lux.library.language', mangaHub.language); } catch {}
+    dexLastAttempt = 0;
+  }
   else if (event.target.id === 'manga-hub-type') mangaHub.type = event.target.value;
   else return;
   void browseMangaDex(mangaHub.action);

@@ -1,4 +1,9 @@
 const dexSite = 'mangadex-auto';
+function allowedCachedWork(book) {
+  return book.siteId !== dexSite || (!book.dexBlocked &&
+    (!book.contentRating || ['safe', 'suggestive'].includes(book.contentRating)) &&
+    !(book.genres || []).some(tag => /^hentai$/i.test(tag.trim())));
+}
 const dexId = (value, type) => {
   try {
     const url = new URL(value);
@@ -10,7 +15,7 @@ async function dexRequest(action, id = '', offset = 0, language = '', q = '', { 
   const params = new URLSearchParams({ action, id, offset, language, q, type, since });
   const response = await fetch('/api/mangadex?' + params, { signal: AbortSignal.timeout(15000) });
   const data = await response.json();
-  if (!response.ok) throw Error(data.error || 'تعذر الاتصال بـ MangaDex.');
+  if (!response.ok) throw Object.assign(Error(data.error || 'تعذر الاتصال بـ MangaDex.'), { status: response.status });
   return data;
 }
 let dexUpdate, dexLastAttempt = 0, dexStatus = 'تتحدث أحدث الفصول المترجمة تلقائيًا.';
@@ -22,7 +27,7 @@ async function updateDex() {
   const library = state;
   dexUpdate = (async () => {
     try {
-      const { books } = await dexRequest('latest');
+      const { books } = await dexRequest('latest', '', 0, mangaHub.language);
       if (state !== library) return;
       for (const book of books) {
         const saved = upsertWork(book, dexSite);
@@ -32,6 +37,7 @@ async function updateDex() {
       await save();
     } catch {
       dexStatus = 'تعذر تحديث MangaDex الآن. تبقى الأعمال المحفوظة متاحة.';
+      flagDexOutage();
     } finally {
       dexUpdate = null;
       if (['home','catalog','new','updates'].includes(view)) render();
@@ -46,7 +52,7 @@ async function fetchDexPages(chapter) {
   if (!images.length) throw Error('لا توجد صور متاحة لهذا الفصل على MangaDex.');
   chapter.images = images;
   chapter.pagesFetchedAt = Date.now();
-  chapter.fullManifest = true;
+  chapter.fullManifest = 2;
   await save();
   return images;
 }
@@ -54,8 +60,12 @@ async function fetchDexPages(chapter) {
 loadChapter = async function(chapter, options) {
   const id = dexId(chapter.url, 'chapter');
   if (!id) return previousReaderLoad(chapter, options);
-  if (chapter.images?.length && (state.downloads[chapter.url] || (chapter.fullManifest && Date.now() - (chapter.pagesFetchedAt || 0) < 600000))) return chapter;
-  await fetchDexPages(chapter);
+  if (chapter.images?.length && (state.downloads[chapter.url] || (chapter.fullManifest === 2 && Date.now() - (chapter.pagesFetchedAt || 0) < 600000))) return chapter;
+  try { await fetchDexPages(chapter); }
+  catch (error) {
+    if (error.status !== 403) flagDexOutage();
+    throw error;
+  }
   return chapter;
 };
 
@@ -88,6 +98,7 @@ function bindDexReaderImages(chapter) {
       }
       img.hidden = true;
       message.hidden = false;
+      flagDexOutage();
     }
     img.addEventListener('error', recover);
     img.addEventListener('load', () => { img.hidden = false; message.hidden = true; });
@@ -101,28 +112,48 @@ function bindDexReaderImages(chapter) {
   });
 }
 
-async function refreshDexBook(book, language = '') {
+async function refreshDexBook(book) {
+  const catalog = state;
   let offset = 0;
+  let result;
+  const chapters = [];
   do {
-    const result = await dexRequest('chapters', dexId(book.source, 'title'), offset, language);
-    upsertWork({ ...book, url: book.source, chapters: result.chapters }, dexSite);
+    try { result = await dexRequest('chapters', dexId(book.source, 'title'), offset); }
+    catch (error) {
+      if (error.status === 403 && state === catalog) { book.dexBlocked = true; await save(); }
+      throw error;
+    }
+    chapters.push(...result.chapters);
     offset = result.next;
   } while (offset !== null && offset < 500);
+  if (state !== catalog || !get(book.id)) return book;
+  const saved = upsertWork({ ...book, url: book.source, chapters }, dexSite);
+  saved.dexAvailability = {
+    total: result.total, complete: result.complete,
+    arabic: chapters.filter(item => item.language === 'ar').length,
+    other: chapters.filter(item => item.language !== 'ar').length
+  };
+  saved.dexCheckedAt = Date.now();
   await save();
-  return book;
+  return saved;
 }
 const previousDetail = detail;
 detail = function(id) {
   previousDetail(id);
   const book = get(id);
-  const language = mangaHub.language;
-  if (book?.siteId !== dexSite || (book.dexCheckedLanguage === language && Date.now() - (book.dexCheckedAt || 0) < 300000)) return;
-  book.dexCheckedAt = Date.now();
-  book.dexCheckedLanguage = language;
-  refreshDexBook(book, language).then(() => {
+  if (book?.siteId !== dexSite || Date.now() - (book.dexCheckedAt || 0) < 300000) return;
+  refreshDexBook(book).then(() => {
     const modal = $('#modal');
     if (modal?.open && modal.querySelector('[data-refresh="' + id + '"]')) previousDetail(id);
-  }).catch(() => { book.dexCheckedAt = 0; });
+  }).catch(error => {
+    book.dexCheckedAt = 0;
+    const status = $('#modal #studioChapters');
+    if ($('#modal')?.open && $('#modal').querySelector('[data-refresh="' + id + '"]') && status) {
+      if (error.status === 403) { $('#modal').close(); render(); }
+      else if (!book.chapters.length) status.textContent = error.message;
+    }
+    if (error.status !== 403) flagDexOutage();
+  });
 };
 
 async function fetchPublicFeed(url, useProxy = false) {
@@ -231,7 +262,7 @@ addSite = async function(value) {
 const previousRefresh = refreshBook;
 refreshBook = async function(id) {
   const book = get(id);
-  if (book?.siteId === dexSite) return refreshDexBook(book, mangaHub.language);
+  if (book?.siteId === dexSite) return refreshDexBook(book);
   const site = state.sites.find(item => item.id === book?.siteId && item.feedOnly);
   if (site) { await refreshExternalFeed(site); return get(id); }
   return previousRefresh(id);
@@ -257,3 +288,54 @@ render = function() {
 setInterval(() => {
   if (!document.hidden && ['home','new','updates'].includes(view)) void updateDex();
 }, 300000);
+
+function dexChapterLabel(book) {
+  const status = book.dexAvailability;
+  if (status?.total === 0 && status.complete) return 'لا يوجد فصول';
+  const chapters = book.chapters || [];
+  const arabic = status?.arabic ?? chapters.filter(isArabicDexChapter).length;
+  const other = status?.other ?? chapters.length - arabic;
+  const partial = !status?.complete ? ' على الأقل' : '';
+  if (arabic) return 'متاح ' + arabic + ' فصل بالعربية' + partial + (other ? ' · ' + other + ' بلغات أخرى' : '');
+  if (other) return 'متاح ' + other + ' فصل بلغات أخرى' + partial;
+  return status?.complete ? 'الفصول مسجلة لكن القراءة غير متاحة في لوكس' : 'لم يُتحقق من الفصول بعد';
+}
+
+let dexHealthStarted = false, dexHealthRunning = false, dexHealthFailed = false, dexHealthRetry;
+function flagDexOutage() {
+  dexHealthFailed = true;
+  if (!dexHealthRetry && navigator.onLine !== false) dexHealthRetry = setTimeout(monitorDexHealth, 30000);
+}
+async function monitorDexHealth() {
+  if (dexHealthRunning || !db) return;
+  clearTimeout(dexHealthRetry);
+  dexHealthRetry = null;
+  if (navigator.onLine === false) { dexHealthFailed = true; return; }
+  dexHealthRunning = true;
+  try {
+    const session = $('#modal')?.open && readerSession;
+    const chapter = session && get(session.id)?.chapters[session.ch];
+    const health = await dexRequest('health', chapter ? dexId(chapter.url, 'chapter') : '');
+    if (!health.api || !health.images) throw Error('MangaDex service unavailable');
+    if (dexHealthFailed) {
+      dexHealthFailed = false;
+      const modal = $('#modal');
+      if (modal?.open) {
+        modal.querySelectorAll('.image-failure:not([hidden]) button').forEach(button => button.click());
+        if (session && readerSession === session && get(session.id)?.siteId === dexSite && !modal.querySelector('.manga-reader')) {
+          modal.querySelector('[data-read]')?.click();
+        }
+        const bookId = modal.querySelector('[data-refresh]')?.dataset.refresh;
+        const book = bookId && get(bookId);
+        if (book?.siteId === dexSite) { book.dexCheckedAt = 0; detail(bookId); }
+      }
+      if (view === 'catalog') void browseMangaDex(mangaHub.action);
+      else if (['home','new','updates'].includes(view)) { dexLastAttempt = 0; void updateDex(); }
+    }
+  } catch {
+    flagDexOutage();
+  } finally { dexHealthRunning = false; }
+}
+window.addEventListener('offline', () => { dexHealthFailed = true; });
+window.addEventListener('online', monitorDexHealth);
+setInterval(monitorDexHealth, 300000);
