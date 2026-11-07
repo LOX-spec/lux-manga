@@ -7,6 +7,7 @@ import { GET as page, HEAD as pageHead } from '../api/page.js';
 import { POST as source } from '../api/source.js';
 import { GET as image } from '../api/image.js';
 import { GET as mangadex } from '../api/mangadex.js';
+import { GET as comick } from '../api/comick.js';
 import { normalizeRoute } from '../routing.js';
 
 const port = Number(process.env.PORT || 4173);
@@ -37,6 +38,7 @@ async function handle(request) {
   if (pathname === '/api/source') return source(request);
   if (pathname === '/api/image') return image(request);
   if (pathname === '/api/mangadex' && request.method === 'GET') return mangadex(request);
+  if (pathname === '/api/comick' && request.method === 'GET') return comick(request);
   if (!['GET', 'HEAD'].includes(request.method)) return new Response('Method not allowed', { status: 405 });
   const file = resolve(root, '.' + decodeURIComponent(pathname));
   const info = file.startsWith(root + sep) && await stat(file).catch(() => null);

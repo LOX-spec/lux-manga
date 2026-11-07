@@ -1,0 +1,87 @@
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;700&family=Tajawal:wght@400;500;700&family=IBM+Plex+Sans+Arabic:wght@400;500;700&display=swap');
+
+:root {
+  --app-font: 'Tajawal';
+  --bg-main: #121110;
+  --bg-card: #1c1a18;
+  --bg-soft: #282522;
+  --text-main: #f5f0e9;
+  --text-muted: #b7ada3;
+  --border-color: #ffffff22;
+}
+html[data-theme="light"] {
+  --bg-main: #f5f6f8;
+  --bg-card: #ffffff;
+  --bg-soft: #e9edf2;
+  --text-main: #1f2937;
+  --text-muted: #526173;
+  --border-color: #cbd2dc;
+}
+html[data-theme="sepia"] {
+  --bg-main: #272019;
+  --bg-card: #33291f;
+  --bg-soft: #423527;
+  --text-main: #f4e8d6;
+  --text-muted: #c5b297;
+  --border-color: #bca17b55;
+}
+html[data-theme="light"] { color-scheme: light; }
+html[data-theme="dark"] { color-scheme: dark; }
+body.studio {
+  --bg: var(--bg-main) !important;
+  --panel: var(--bg-card) !important;
+  --soft: var(--bg-soft) !important;
+  --text: var(--text-main) !important;
+  --muted: var(--text-muted) !important;
+  --line: var(--border-color) !important;
+  background: var(--bg-main);
+  color: var(--text-main);
+}
+body, button, input, select, textarea, h1, h2, h3, article, p, label, legend, summary, small, a, .novel-body, .novel-reader-content {
+  font-family: var(--app-font), Tahoma, sans-serif !important;
+}
+.studio .search { background: var(--bg-card); border-color: var(--border-color); }
+.studio :is(aside,.topbar,dialog,.source-card,.studio-card,.resume-card,.manga-hub,.settings-grid fieldset,.novel-admin-panel,.novel-backup-panel,.source-overview>div,.backup-panel,.comfort-reader-tools,.comic-side-block,.comic-side-guide,.comic-series-card,.comic-catalogue-tools,.comic-source-strip,.lux-update,.download-row,.notification) {
+  background: var(--bg-card);
+  color: var(--text-main);
+  border-color: var(--border-color);
+}
+.studio :is(input,select,textarea,option) {
+  background: var(--bg-card);
+  color: var(--text-main);
+  border-color: var(--border-color);
+}
+html[data-theme="light"] .studio :is(.topbar,aside,#mobileNav,.browse-sort,.reader-tools,.reader-utility,.comic-filter-row,footer) {
+  background: var(--bg-main);
+  color: var(--text-main);
+  border-color: var(--border-color);
+}
+.studio :is(.novels-theme,.comics-theme) { color: var(--text-main); }
+html[data-theme="light"] .studio :is(.novel-discover-hero,.comic-hero,.comic-spotlight,.novel-admin,.download-panel,.guide-panel) {
+  background: var(--bg-card);
+  color: var(--text-main);
+  border-color: var(--border-color);
+}
+html[data-theme="light"] .studio :is(.novel-hero-copy>p,.comic-hero-copy>p,.comic-hero-stats,.comic-hero-stats b,.comic-spotlight-copy,.comic-spotlight-copy p) { color: var(--text-main); }
+html[data-theme="light"] .studio .comic-spotlight::after { background: linear-gradient(270deg,#fffffffa,#ffffffe0 45%,#ffffff40); }
+html[data-theme="light"] .studio :is(.comic-carousel-arrows button,.comic-hero-actions>button) { color: var(--text-main); border-color: var(--border-color); }
+body:has(#novel-details) {
+  --bg: var(--bg-main); --panel: var(--bg-card); --text: var(--text-main);
+  --muted: var(--text-muted); --line: var(--border-color);
+  background: var(--bg-main); color: var(--text-main);
+}
+.reader-reveal {
+  position: sticky;
+  bottom: .6rem;
+  z-index: 20;
+  margin-inline: auto;
+  display: block;
+  box-shadow: 0 3px 18px #0004;
+}
+.reader-reveal[hidden] { display: none; }
+.reader-clean .reader-reveal { display: block; }
+.reader-clean #readerReturnIndex { display: none; }
+#readerReturnIndex { position: sticky; top: .5rem; z-index: 8; margin-block-end: .5rem; }
+.reader-clean .comfort-reader-tools { opacity: 0; pointer-events: none; }
+.comfort-reader-tools { transition: opacity .15s ease; }
+@media (prefers-reduced-motion: reduce) { .comfort-reader-tools { transition: none; } }

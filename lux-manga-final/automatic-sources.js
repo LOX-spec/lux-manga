@@ -7,6 +7,7 @@ function allowedCachedWork(book) {
 function storeDexWork(work) {
   const book = upsertWork(work, dexSite);
   if (Array.isArray(work.translationLanguages)) book.translationLanguages = work.translationLanguages;
+  if (Array.isArray(work.verifiedLanguages)) book.verifiedLanguages = [...new Set([...(book.verifiedLanguages || []), ...work.verifiedLanguages])];
   if (work.contentRating) book.contentRating = work.contentRating;
   if (typeof work.adultContent === 'boolean') {
     book.adultContent = work.adultContent;
@@ -24,7 +25,7 @@ const dexId = (value, type) => {
 async function dexRequest(action, id = '', offset = 0, language = '', q = '', { type = '', since = '' } = {}) {
   const params = new URLSearchParams({ action, id, offset, language, q, type, since });
   if (mangaHub.adult) params.set('adult', '1');
-  const response = await fetch('/api/mangadex?' + params, { signal: AbortSignal.timeout(15000) });
+  const response = await fetch('/api/mangadex?' + params, { signal: AbortSignal.timeout(28000) });
   const data = await response.json();
   if (!response.ok) throw Object.assign(Error(data.error || 'تعذر الاتصال بـ MangaDex.'), { status: response.status });
   return data;

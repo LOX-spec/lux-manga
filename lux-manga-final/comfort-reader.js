@@ -50,6 +50,17 @@ drawReader = function(book, index) {
   toolbar.innerHTML = '<button data-comfort-prev aria-label="الصفحة السابقة">→</button><output aria-live="polite"></output><button data-comfort-next aria-label="الصفحة التالية">←</button><button data-comfort-mode></button><button data-lux-fullscreen>ملء الشاشة</button><button data-comfort-hide>إخفاء الأدوات</button>';
   reader.before(toolbar);
   modal.classList.remove('reader-clean');
+  modal.setAttribute('closedby', 'none');
+  const exit = modal.querySelector('#close');
+  exit.id = 'readerReturnIndex';
+  exit.textContent = 'العودة للفهرس';
+  exit.setAttribute('aria-label', 'العودة للفهرس');
+  exit.onclick = () => { readerSession = null; detail(book.id); };
+  const reveal = document.createElement('button');
+  reveal.className = 'reader-reveal';
+  reveal.textContent = 'إظهار الأدوات';
+  reveal.hidden = true;
+  modal.append(reveal);
 
   function savePosition() {
     try { localStorage.setItem('lux.picture.position:' + book.id, JSON.stringify({ chapter: chapter.url, page: position, mode })); }
@@ -91,7 +102,11 @@ drawReader = function(book, index) {
   function toggleTools() {
     clean = !clean;
     modal.classList.toggle('reader-clean', clean);
+    reveal.hidden = !clean;
   }
+  reveal.onclick = toggleTools;
+  const preventExit = event => event.preventDefault();
+  modal.addEventListener('cancel', preventExit);
   toolbar.querySelector('[data-comfort-prev]').onclick = () => move(-1);
   toolbar.querySelector('[data-comfort-next]').onclick = () => move(1);
   toolbar.querySelector('[data-comfort-mode]').onclick = () => {
@@ -109,6 +124,7 @@ drawReader = function(book, index) {
     if (event.key === 'h') toggleTools();
     if (mode === 'rtl' && ['ArrowLeft', 'ArrowRight'].includes(event.key)) {
       event.preventDefault();
+      event.stopPropagation();
       move(event.key === 'ArrowLeft' ? 1 : -1);
     }
   });
@@ -128,6 +144,8 @@ drawReader = function(book, index) {
   };
   const cleanup = () => {
     modal.removeEventListener('scroll', scroll);
+    modal.removeEventListener('cancel', preventExit);
+    modal.removeAttribute('closedby');
     modal.classList.remove('reader-clean');
     cancelAnimationFrame(frame);
     observer.disconnect();

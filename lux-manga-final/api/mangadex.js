@@ -72,7 +72,7 @@ export async function GET(request) {
   if (!['latest', 'catalog', 'popular', 'rated', 'search', 'chapters', 'pages', 'health'].includes(action) || (['chapters','pages'].includes(action) && !uuid.test(id))) {
     return Response.json({ error: 'طلب MangaDex غير صالح.' }, { status: 400 });
   }
-  const signal = AbortSignal.timeout(12000);
+  const signal = AbortSignal.timeout(25000);
   try {
     let result;
     if (action === 'health') {
@@ -110,7 +110,7 @@ export async function GET(request) {
       if (action === 'search' && !title) return Response.json({ books: [], next: null, total: 0 });
       const order = { catalog: 'createdAt', search: 'relevance', popular: 'followedCount', rated: 'rating' }[action];
       const data = await requestDex('/manga', [
-        ['limit', Math.min(pageSize, windowLimit - offset)], ['offset', offset], ...ratings, ['includes[]', 'cover_art'],
+        ['limit', Math.min(language ? 12 : pageSize, windowLimit - offset)], ['offset', offset], ...ratings, ['includes[]', 'cover_art'],
         ...(language ? [['availableTranslatedLanguage[]', language]] : []),
         ...origins.map(lang => ['originalLanguage[]', lang]),
         ['order[' + order + ']', action === 'catalog' ? 'asc' : 'desc'],
@@ -132,6 +132,23 @@ export async function GET(request) {
       }
       result = { books: data.data.filter(item => allowedWork(item, adult) &&
         (!language || item.attributes.availableTranslatedLanguages?.includes(language))).map(item => work(item, [])), next, total: data.total };
+      if (language) {
+        const checked = new Array(result.books.length);
+        let index = 0;
+        await Promise.all(Array.from({ length: Math.min(4, checked.length) }, async () => {
+          while (index < checked.length) {
+            const current = index++;
+            const book = result.books[current];
+            const feed = await requestDex('/manga/' + book.url.split('/').at(-1) + '/feed', [
+              ['translatedLanguage[]', language], ...ratings, ['includeExternalUrl', '0'],
+              ['includeUnavailable', '0'], ['limit', 1], ['order[chapter]', 'asc']
+            ], signal);
+            const available = feed.data.find(item => readable(item) && item.attributes.translatedLanguage === language);
+            if (available) checked[current] = { ...book, chapters: [chapter(available)], verifiedLanguages: [language] };
+          }
+        }));
+        result.books = checked.filter(Boolean);
+      }
     } else {
       const feed = await requestDex('/chapter', [...selectedLanguages, ...ratings,
         ...origins.map(lang => ['originalLanguage[]', lang]), ['limit', 50], ['order[publishAt]', 'desc']], signal);

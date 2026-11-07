@@ -34,7 +34,7 @@ function matchesLibraryChapter(book, chapter) {
 }
 function visibleLibraryWork(book) {
   if (!mangaHub.language || mediaOf(book) !== 'manga') return true;
-  return book.translationLanguages?.includes(mangaHub.language) ||
+  return book.verifiedLanguages?.includes(mangaHub.language) ||
     (book.siteId === 'local-samples' && mangaHub.language === 'ar') ||
     book.chapters.some(chapter => matchesLibraryChapter(book, chapter));
 }
@@ -107,7 +107,8 @@ function showMangaHubPage(index) {
   mangaHub.page = index;
   mangaHub.ids = mangaHub.pages[index].ids;
   const total = mangaHub.total;
-  mangaHub.message = total > 0 ? total.toLocaleString('ar-SA') + ' عمل مطابق في MangaDex'
+  mangaHub.message = mangaHub.language ? mangaHub.ids.length + ' أعمال بفصول قابلة للقراءة باللغة المحددة في هذه الصفحة'
+    : total > 0 ? total.toLocaleString('ar-SA') + ' عمل مطابق في MangaDex'
     : mangaHub.ids.length ? mangaHub.ids.length + ' عمل من MangaDex' : 'لا توجد نتائج مطابقة.';
 }
 
@@ -148,14 +149,16 @@ siteForm = function() {
   sitePresetForm();
   $('#siteForm').insertAdjacentHTML('beforebegin', `<div class="manga-hub-presets">
     <label for="sourcePreset">المصدر</label>
-    <select id="sourcePreset"><option value="dex">MangaDex · API رسمي</option><option value="proxy">مصدر مخصص · بروكسي الخلاصات</option></select>
+    <select id="sourcePreset"><option value="dex">MangaDex · API رسمي</option><option value="comick">Comick · بحث وقراءة عبر المصدر</option><option value="proxy">مصدر مخصص · بروكسي الخلاصات</option></select>
     <div id="sourcePresetActions" class="actions"><button data-dex-browse="latest">أحدث الفصول</button><button data-dex-browse="popular">الأكثر شعبية</button></div>
+    <div id="comickSearchPanel" hidden><p class="note">بحث بديل من Comick. تُفتح القراءة في المصدر الأصلي؛ الوصول إلى فصوله داخل لوكس غير متاح حاليًا. لا يطبق فلتر لغة مكتبة MangaDex على هذه النتائج.</p><form id="comickSearch"><label for="comickQuery">اسم العمل</label><input id="comickQuery" name="q" maxlength="150" placeholder="ابحث في Comick"><button class="primary">بحث / استكشاف</button></form><p id="comickSearchStatus" role="status"></p><div id="comickResults"></div></div>
   </div>`);
   const sync = () => {
     const custom = $('#sourcePreset').value === 'proxy';
     $('#siteForm').hidden = !custom;
     $('#smartImport').hidden = !custom;
-    $('#sourcePresetActions').hidden = custom;
+    $('#sourcePresetActions').hidden = $('#sourcePreset').value !== 'dex';
+    $('#comickSearchPanel').hidden = $('#sourcePreset').value !== 'comick';
   };
   $('#sourcePreset').onchange = sync;
   sync();
@@ -166,6 +169,31 @@ document.addEventListener('submit', event => {
   event.preventDefault();
   mangaHub.query = new FormData(event.target).get('title').trim();
   if (mangaHub.query) void browseMangaDex('search');
+});
+document.addEventListener('submit', async event => {
+  if (event.target.id !== 'comickSearch') return;
+  event.preventDefault();
+  const form = event.target, output = $('#comickResults'), status = $('#comickSearchStatus');
+  output.replaceChildren();
+  form.querySelector('button').disabled = true;
+  status.textContent = 'جارٍ البحث…';
+  try {
+    const response = await fetch('/api/comick?q=' + encodeURIComponent(new FormData(form).get('q') || ''), { signal: AbortSignal.timeout(12000) });
+    const data = await response.json();
+    if (!response.ok) throw Error(data.error || 'تعذر البحث.');
+    for (const book of data.books) {
+      const link = document.createElement('a');
+      link.href = book.url;
+      link.textContent = book.title + ' · تصفح في المصدر ↗';
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
+      const row = document.createElement('p');
+      row.append(link);
+      output.append(row);
+    }
+    status.textContent = data.books.length ? data.books.length + ' نتائج من Comick' : 'لا توجد نتائج متاحة.';
+  } catch (error) { status.textContent = error.message; }
+  finally { form.querySelector('button').disabled = false; }
 });
 document.addEventListener('change', event => {
   if (event.target.id === 'manga-hub-ar') {

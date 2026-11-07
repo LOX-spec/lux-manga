@@ -1,4 +1,4 @@
-const SHELL='lux-shell-v27',PAGES='lux-pages-v1',COVERS='lux-novel-covers-v1';
+const SHELL='lux-shell-v28',PAGES='lux-pages-v1',COVERS='lux-novel-covers-v1';
 const ART='lux-published-art-v1';
 let artWrites=Promise.resolve();
 const SAMPLE_PAGE_URLS = [];
@@ -7,7 +7,7 @@ const COVER_FALLBACK='/novel-cover-fallback.svg';
 const FILES=['/',COVER_FALLBACK,...SAMPLE_COVER_URLS,'/novels-demo.js','/novels-view.js','/novels-view.css','/novel-reader.js','/novel-reader.css','/style.css','/studio.css','/install.css','/app.js','/import.js','/audit.js','/settings.js','/features.js','/experience.js','/media.js','/discovery.js','/scanner.js','/source-delete.js','/collections.js','/studio.js','/install.js','/manifest.webmanifest','/icon-192.png','/icon-512.png'];
 const NOVEL_ASSETS = ['/novel-admin.js', '/novel-admin.css', '/novel-publications.js', '/novel-pages.js',
   '/novel-page-runtime.js', '/novel-details-controls.js', '/sample-reader-controls.js',
-  '/app-bootstrap.js', '/routing.js', '/manifest.json', '/comicverse-data.js', '/comicverse-source.js', '/comics-model.js', '/comics-hub.js', '/smart-import.js', '/automatic-sources.js', '/manga-hub.js', '/comfort-reader.js', '/manga-samples.js', '/universal-backup.js', ...Array.from({length:6},(_,i)=>['/manga-sample-'+(i+1)+'-cover.svg', ...Array.from({length:3},(_,j)=>Array.from({length:3},(_,k)=>'/manga-sample-'+(i+1)+'-'+(j+1)+'-'+(k+1)+'.svg')).flat()]).flat(), '/comics-view.css', '/polish.css', '/chapter-links.js'];
+  '/app-bootstrap.js', '/routing.js', '/manifest.json', '/comicverse-data.js', '/comicverse-source.js', '/comics-model.js', '/comics-hub.js', '/smart-import.js', '/automatic-sources.js', '/manga-hub.js', '/comfort-reader.js', '/manga-samples.js', '/universal-backup.js', ...Array.from({length:6},(_,i)=>['/manga-sample-'+(i+1)+'-cover.svg', ...Array.from({length:3},(_,j)=>Array.from({length:3},(_,k)=>'/manga-sample-'+(i+1)+'-'+(j+1)+'-'+(k+1)+'.svg')).flat()]).flat(), '/comics-view.css', '/polish.css', '/chapter-links.js', '/appearance.css', '/interface-repairs.js', '/font-preferences.js'];
 const NOVEL_SHELLS = ['/?view=novel', '/?view=reader'];
 // Cache an entire matching shell. Login pages must never replace the application.
 self.addEventListener('install', event => event.waitUntil((async () => {

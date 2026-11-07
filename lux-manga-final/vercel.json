@@ -4,6 +4,12 @@
   "buildCommand": "npm run build",
   "outputDirectory": "public-build",
   "functions": {
+    "api/mangadex.js": {
+      "maxDuration": 30
+    },
+    "api/comick.js": {
+      "maxDuration": 15
+    },
     "api/page.js": {
       "includeFiles": "*.{html,js,css,svg}"
     },
