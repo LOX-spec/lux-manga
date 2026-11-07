@@ -1,6 +1,6 @@
 {
   "name": "lux-manga",
-  "version": "4.9.0",
+  "version": "5.0.0",
   "private": true,
   "type": "module",
   "engines": {
@@ -9,6 +9,6 @@
   "scripts": {
     "build": "node scripts/build.mjs",
     "preview": "npm run build && node scripts/preview.mjs",
-    "test": "npm run build && node scripts/verify.mjs && node scripts/verify-languages.mjs"
+    "test": "npm run build && node scripts/verify.mjs && node scripts/verify-languages.mjs && node scripts/verify-engine.mjs"
   }
 }

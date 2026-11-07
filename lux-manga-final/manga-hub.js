@@ -141,7 +141,7 @@ render = function() {
     <div id="manga-hub-pagination" class="actions" hidden><button id="manga-hub-prev">السابق</button><span id="manga-hub-page"></span><button id="manga-hub-next">التالي · أعمال أكثر</button></div>
   </section>`);
   paintMangaHub();
-  if (db && !mangaHub.started) void browseMangaDex('catalog');
+  if (db && !mangaHub.started && (typeof sourceEngine === 'undefined' || sourceEngine.provider !== 'suwayomi')) void browseMangaDex('catalog');
 };
 
 const sitePresetForm = siteForm;
@@ -149,15 +149,16 @@ siteForm = function() {
   sitePresetForm();
   $('#siteForm').insertAdjacentHTML('beforebegin', `<div class="manga-hub-presets">
     <label for="sourcePreset">المصدر</label>
-    <select id="sourcePreset"><option value="dex">MangaDex · API رسمي</option><option value="comick">Comick · بحث وقراءة عبر المصدر</option><option value="proxy">مصدر مخصص · بروكسي الخلاصات</option></select>
+    <select id="sourcePreset"><option value="dex">MangaDex · API رسمي</option><option value="engine">Suwayomi · محرك الإضافات</option><option value="comick">Comick · بحث وقراءة عبر المصدر</option><option value="proxy">مصدر مخصص · بروكسي الخلاصات</option></select>
     <div id="sourcePresetActions" class="actions"><button data-dex-browse="latest">أحدث الفصول</button><button data-dex-browse="popular">الأكثر شعبية</button></div>
-    <div id="comickSearchPanel" hidden><p class="note">بحث بديل من Comick. تُفتح القراءة في المصدر الأصلي؛ الوصول إلى فصوله داخل لوكس غير متاح حاليًا. لا يطبق فلتر لغة مكتبة MangaDex على هذه النتائج.</p><form id="comickSearch"><label for="comickQuery">اسم العمل</label><input id="comickQuery" name="q" maxlength="150" placeholder="ابحث في Comick"><button class="primary">بحث / استكشاف</button></form><p id="comickSearchStatus" role="status"></p><div id="comickResults"></div></div>
+    <div id="sourceEngineInfo" hidden><p>قراءة مصادر Tachiyomi / Keiyoushi عبر خادم Suwayomi مستقل. يتطلب خادمًا متصلًا ومصادر مثبتة عليه.</p><button data-open-engine>فتح محرك الإضافات</button></div><div id="comickSearchPanel" hidden><p class="note">بحث بديل من Comick. تُفتح القراءة في المصدر الأصلي؛ الوصول إلى فصوله داخل لوكس غير متاح حاليًا. لا يطبق فلتر لغة مكتبة MangaDex على هذه النتائج.</p><form id="comickSearch"><label for="comickQuery">اسم العمل</label><input id="comickQuery" name="q" maxlength="150" placeholder="ابحث في Comick"><button class="primary">بحث / استكشاف</button></form><p id="comickSearchStatus" role="status"></p><div id="comickResults"></div></div>
   </div>`);
   const sync = () => {
     const custom = $('#sourcePreset').value === 'proxy';
     $('#siteForm').hidden = !custom;
     $('#smartImport').hidden = !custom;
     $('#sourcePresetActions').hidden = $('#sourcePreset').value !== 'dex';
+    $('#sourceEngineInfo').hidden = $('#sourcePreset').value !== 'engine';
     $('#comickSearchPanel').hidden = $('#sourcePreset').value !== 'comick';
   };
   $('#sourcePreset').onchange = sync;
@@ -211,18 +212,18 @@ const settingsBeforeContentChoice = renderSettings;
 renderSettings = function() {
   settingsBeforeContentChoice();
   $('#page').insertAdjacentHTML('beforeend', `<section class="backup-panel"><div>
-    <h3>محتوى MangaDex للبالغين</h3>
-    <label><input id="dex-adult-content" type="checkbox" ${mangaHub.adult ? 'checked' : ''}> عرض محتوى البالغين (+18)</label>
-    <p>رؤية المحتوى الإباحي وأي محتوى آخر للبالغين على مسؤوليتك أنت.</p>
+    <h3>محتوى البالغين</h3>
+    <label><input id="dex-adult-content" type="checkbox" ${!mangaHub.adult ? 'checked' : ''}> حجب محتوى البالغين</label>
+    <p>عند تفعيل الحجب، تُستبعد الأعمال المصنفة pornographic أو erotica من العرض والقراءة.</p>
   </div></section>`);
 };
 document.addEventListener('change', event => {
   if (event.target.id !== 'dex-adult-content') return;
-  if (event.target.checked && !window.confirm('أؤكد أن عمري 18 سنة أو أكثر. رؤية المحتوى الإباحي وأي محتوى آخر للبالغين على مسؤوليتك أنت.')) {
-    event.target.checked = false;
+  if (!event.target.checked && !window.confirm('أؤكد أن عمري 18 سنة أو أكثر. رؤية المحتوى الإباحي وأي محتوى آخر للبالغين على مسؤوليتك أنت.')) {
+    event.target.checked = true;
     return;
   }
-  mangaHub.adult = event.target.checked;
+  mangaHub.adult = !event.target.checked;
   try { localStorage.setItem('lux.library.adult', mangaHub.adult ? '1' : '0'); } catch {}
   mangaHub.revision++;
   mangaHub.pages = [];
@@ -231,6 +232,8 @@ document.addEventListener('change', event => {
   mangaHub.loading = false;
   mangaHub.started = false;
   dexLastAttempt = 0;
+  if ($('#modal').open && readerSession && !get(readerSession.id)) { readerSession = null; $('#modal').close(); }
+  render();
   toast(mangaHub.adult ? 'فُعّل عرض محتوى البالغين.' : 'أُخفي محتوى البالغين.');
 });
 document.addEventListener('click', event => {

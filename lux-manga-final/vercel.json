@@ -18,6 +18,9 @@
     },
     "api/image.js": {
       "maxDuration": 30
+    },
+    "api/suwayomi.js": {
+      "maxDuration": 30
     }
   },
   "rewrites": [

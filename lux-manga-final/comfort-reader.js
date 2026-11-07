@@ -53,9 +53,11 @@ drawReader = function(book, index) {
   modal.setAttribute('closedby', 'none');
   const exit = modal.querySelector('#close');
   exit.id = 'readerReturnIndex';
+  exit.classList.remove('close');
   exit.textContent = 'العودة للفهرس';
   exit.setAttribute('aria-label', 'العودة للفهرس');
-  exit.onclick = () => { readerSession = null; detail(book.id); };
+  const returnToIndex = () => { readerSession = null; detail(book.id); };
+  exit.onclick = returnToIndex;
   const reveal = document.createElement('button');
   reveal.className = 'reader-reveal';
   reveal.textContent = 'إظهار الأدوات';
@@ -114,14 +116,21 @@ drawReader = function(book, index) {
     layout(true);
   };
   toolbar.querySelector('[data-comfort-hide]').onclick = toggleTools;
-  reader.addEventListener('click', event => {
-    if (event.target.closest('a')) return;
-    const rect = reader.getBoundingClientRect();
-    if (event.clientX >= rect.left + rect.width * .25 && event.clientX <= rect.right - rect.width * .25) toggleTools();
-  });
+  const gapClick = event => {
+    if (!reader.isConnected || !modal.open || event.target.closest('button,a,input,select,textarea,label,.comfort-reader-tools,.reader-tools,.reader-heading,.chapter-end')) return;
+    const visible = images.filter(image => !image.closest('.manga-page').hidden);
+    const onPage = visible.some(image => {
+      const rect = image.getBoundingClientRect();
+      return event.clientX >= rect.left && event.clientX <= rect.right && event.clientY >= rect.top && event.clientY <= rect.bottom;
+    });
+    if (!onPage && (event.target === modal || event.target === reader || event.target.closest('.manga-page'))) {
+      event.stopPropagation();
+      returnToIndex();
+    }
+  };
+  modal.addEventListener('click', gapClick);
   reader.tabIndex = 0;
   reader.addEventListener('keydown', event => {
-    if (event.key === 'h') toggleTools();
     if (mode === 'rtl' && ['ArrowLeft', 'ArrowRight'].includes(event.key)) {
       event.preventDefault();
       event.stopPropagation();
@@ -145,6 +154,7 @@ drawReader = function(book, index) {
   const cleanup = () => {
     modal.removeEventListener('scroll', scroll);
     modal.removeEventListener('cancel', preventExit);
+    modal.removeEventListener('click', gapClick);
     modal.removeAttribute('closedby');
     modal.classList.remove('reader-clean');
     cancelAnimationFrame(frame);
