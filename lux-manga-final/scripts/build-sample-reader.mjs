@@ -39,6 +39,7 @@ function documentHtml(view, title, css, markup = '') {
   <style>${css}</style>
   <link rel="stylesheet" href="/appearance.css">
   <script src="/font-preferences.js"></script>
+  <script src="/release-watcher.js" defer></script>
   <script src="/novels-demo.js" defer></script>
   <script src="/novel-publications.js" defer></script>
   <script src="/novel-pages.js" defer></script>
