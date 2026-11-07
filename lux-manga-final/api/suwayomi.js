@@ -33,7 +33,8 @@ export async function GET(request) {
     const fields = '{ ' + mangaFields + ' }';
     if (action === 'sources') {
       const data = await graphql('query { sources { nodes { id name lang isNsfw supportsLatest } } }');
-      const sources = data.sources.nodes.filter(source => allowAdult || !source.isNsfw);
+      const sources = data.sources.nodes.filter(source => source.id !== '0' && source.lang !== 'localsourcelang' && (allowAdult || !source.isNsfw))
+        .sort((a, b) => a.name.localeCompare(b.name, 'en'));
       return json({ configured: true, sources });
     }
     if (action === 'browse') {

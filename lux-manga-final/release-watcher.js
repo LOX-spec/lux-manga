@@ -2,7 +2,7 @@
   const current = '__LUX_BUILD_VERSION__';
   let pending = false, checking = false, reloading = false;
   function busy() {
-    return !!document.querySelector('.reader-modal[open],#sample-reader,.novel-admin') ||
+    return !!document.querySelector('dialog[open],#sample-reader,.novel-admin') ||
       document.activeElement?.matches('input,textarea,[contenteditable="true"]') ||
       (typeof syncing !== 'undefined' && syncing.size > 0) ||
       (typeof siteAuditRunning !== 'undefined' && siteAuditRunning.size > 0) ||

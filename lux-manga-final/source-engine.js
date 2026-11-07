@@ -1,5 +1,5 @@
-const sourceEngine = { provider: 'mangadex', sources: [], loaded: false, busy: false, page: 1, next: false, items: [], selected: '', message: '', revision: 0 };
-try { sourceEngine.provider = localStorage.getItem('lux.source.engine') === 'suwayomi' ? 'suwayomi' : 'mangadex'; } catch {}
+const sourceEngine = { provider: 'suwayomi', sources: [], loaded: false, busy: false, page: 1, next: false, items: [], selected: '', message: '', revision: 0 };
+try { sourceEngine.provider = localStorage.getItem('lux.source.engine') === 'mangadex' ? 'mangadex' : 'suwayomi'; } catch {}
 async function engineRequest(action, options = {}) {
   const response = await fetch('/api/suwayomi?' + new URLSearchParams({ action, adult: mangaHub.adult ? '1' : '0', ...options }), { signal: AbortSignal.timeout(28000) });
   const data = await response.json();
@@ -19,6 +19,10 @@ async function loadEngineSources() {
     sourceEngine.sources = result.sources;
     sourceEngine.message = result.configured ? 'اختر مصدرًا مثبتًا على الخادم لبدء التصفح.' : result.message;
     sourceEngine.loaded = true;
+    if (result.configured && !sourceEngine.selected) {
+      sourceEngine.selected = String(result.sources.find(source => !mangaHub.language || source.lang === mangaHub.language)?.id || '');
+      if (sourceEngine.selected) void browseEngine('POPULAR');
+    }
   } catch (error) { sourceEngine.message = error.message; }
   paintSourceEngine();
 }
