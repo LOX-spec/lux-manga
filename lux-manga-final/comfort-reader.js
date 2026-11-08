@@ -49,6 +49,16 @@ drawReader = function(book, index) {
   toolbar.className = 'comfort-reader-tools';
   toolbar.innerHTML = '<button data-comfort-prev aria-label="الصفحة السابقة">→</button><output aria-live="polite"></output><button data-comfort-next aria-label="الصفحة التالية">←</button><button data-comfort-mode></button><button data-lux-fullscreen>ملء الشاشة</button><button data-comfort-hide>إخفاء الأدوات</button>';
   reader.before(toolbar);
+  let zoom=100;
+  try{zoom=Math.max(50,Math.min(250,Number(localStorage.getItem('lux.picture.zoom'))||100));}catch{}
+  const zoomTools=document.createElement('span');zoomTools.className='reader-zoom-tools';
+  zoomTools.innerHTML='<button data-zoom-out aria-label="تصغير الصفحة">−</button><output aria-label="نسبة التكبير"></output><button data-zoom-in aria-label="تكبير الصفحة">+</button><button data-zoom-fit>ملاءمة الصفحة</button>';
+  toolbar.append(zoomTools);
+  function applyZoom(){reader.style.zoom=zoom/100;zoomTools.querySelector('output').textContent=zoom+'%';zoomTools.querySelector('[data-zoom-out]').disabled=zoom<=50;zoomTools.querySelector('[data-zoom-in]').disabled=zoom>=250;try{localStorage.setItem('lux.picture.zoom',zoom);}catch{}}
+  zoomTools.querySelector('[data-zoom-out]').onclick=()=>{zoom=Math.max(50,zoom-10);applyZoom();};
+  zoomTools.querySelector('[data-zoom-in]').onclick=()=>{zoom=Math.min(250,zoom+10);applyZoom();};
+  zoomTools.querySelector('[data-zoom-fit]').onclick=()=>{zoom=100;applyZoom();};
+  applyZoom();
   modal.classList.remove('reader-clean');
   modal.setAttribute('closedby', 'none');
   const exit = modal.querySelector('#close');

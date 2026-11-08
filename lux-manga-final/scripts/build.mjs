@@ -6,7 +6,7 @@ import { normalizeRoute } from '../routing.js';
 
 const output = 'public-build';
 const { pages, coverAssets } = buildSamplePages();
-const assetExtensions = new Set(['.html', '.js', '.css', '.svg', '.png', '.webmanifest']);
+const assetExtensions = new Set(['.html', '.js', '.css', '.svg', '.png', '.webmanifest', '.otf']);
 const files = readdirSync('.', { withFileTypes: true })
   .filter(entry => entry.isFile() && (assetExtensions.has(extname(entry.name)) || entry.name === 'manifest.json'));
 const fingerprint = createHash('sha256');
@@ -21,7 +21,7 @@ for (const { name } of files) {
   copyFileSync(name, output + '/' + name);
 }
 writeFileSync(output + '/release-watcher.js', readFileSync('release-watcher.js', 'utf8').replace('__LUX_BUILD_VERSION__', buildId));
-writeFileSync(output + '/version.json', JSON.stringify({ build: buildId }));
+writeFileSync(output + '/version.json', JSON.stringify({ build: buildId, version: JSON.parse(readFileSync('package.json','utf8')).version.replace(/\.0$/, '') }));
 // Static entry points and server-rendered chapters use the same versioned offline cache.
 const serviceWorker = readFileSync('sw.js', 'utf8')
   .replace(/lux-shell-v\d+/, 'lux-shell-vercel-' + buildId)

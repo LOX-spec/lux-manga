@@ -37,7 +37,7 @@ function documentHtml(view, title, css, markup = '') {
   <link rel="apple-touch-icon" href="/icon-192.png">
   <title>${escaped}</title>
   <style>${css}</style>
-  <link rel="stylesheet" href="/appearance.css">
+  <link rel="stylesheet" href="/appearance.css"><link rel="stylesheet" href="/thmanyah-font.css">
   <script src="/font-preferences.js"></script>
   <script src="/release-watcher.js" defer></script>
   <script src="/novels-demo.js" defer></script>

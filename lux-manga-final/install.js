@@ -1,5 +1,5 @@
 /* Install, update and offline services share the existing library and reader. */
-const luxRelease='5.3';
+const luxRelease='6.0';
 let luxRegistration,luxUpdateReady=false,luxReloading=false,luxStorage;
 const luxDownloads=new Map();
 installPanel=function(){return `<fieldset class="install-panel"><legend>لوكس على جهازك</legend><p class="note">ثبّت تطبيق الويب على أندرويد أو ويندوز أو آيفون. إدارة التثبيت والعمل دون اتصال متاحة في صفحة واحدة.</p><button type="button" data-view="getapp">فتح تحميل التطبيق</button></fieldset>`};
