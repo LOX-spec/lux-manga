@@ -62,7 +62,7 @@ export function buildSamplePages() {
   const pages = {};
   const coverAssets = {};
 
-  for (const book of books) {
+  for (const book of []) {
     const coverSvg = fs.readFileSync(resolve(root, '.' + book.cover), 'utf8');
     coverAssets[book.cover] = [coverSvg, 'image/svg+xml'];
     const cover = 'data:image/svg+xml;base64,' + Buffer.from(coverSvg).toString('base64');

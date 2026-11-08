@@ -40,6 +40,7 @@ const novelSearchText = value => String(value).normalize('NFKD')
 function renderNovelSampleShelf() {
   const formatChapter = new Intl.NumberFormat('ar');
   const allNovels = LuxNovelPublications.catalogue();
+  if(!allNovels.length) return `<section class="backup-panel"><h2>رف الروايات</h2><p>أضف مصدر روايات أو انشر عملك من استوديو الناشر. تظهر الأعمال المستوردة أدناه.</p><button data-ready-sources>اختيار مصدر جاهز</button><a href="/?view=admin">استوديو الناشر ←</a></section>`;
   const query = novelSearchText(novelShelfFilters.query.trim());
   const novels = allNovels.filter(book =>
     (!query || novelSearchText([book.title, book.author, book.synopsis, ...book.genres].join(' ')).includes(query)) &&
@@ -101,7 +102,7 @@ function renderNovelSampleShelf() {
     <div class="novel-genre-filters" aria-label="تصنيفات الروايات">${['',...genres].map(genre => `<button type="button" data-novel-genre="${esc(genre)}" aria-pressed="${genre === novelShelfFilters.genre}">${esc(genre || 'الكل')}</button>`).join('')}</div>
     ${cards(novels)}
     ${!novels.length ? '<div class="novel-search-empty"><h3>لم نعثر على حكاية مطابقة</h3><p>جرّب عنوانًا آخر أو امسح عوامل التصفية.</p><button type="button" data-novel-reset>عرض كل الروايات</button></div>' : ''}
-    <p class="novel-shelf-note">الأعمال التجريبية مرفقة مع لوكس. أعمال استوديو الناشر ومواضع القراءة محفوظة في متصفحك.</p>
+    <p class="novel-shelf-note">رواياتك المنشورة ومواضع القراءة محفوظة في متصفحك. أضف مصدرًا أو انشر روايتك للبدء.</p>
   </section>`;
 }
 

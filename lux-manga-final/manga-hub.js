@@ -112,44 +112,12 @@ function showMangaHubPage(index) {
     : mangaHub.ids.length ? mangaHub.ids.length + ' عمل من MangaDex' : 'لا توجد نتائج مطابقة.';
 }
 
-const mountHubAfterRender = render;
-render = function() {
-  mountHubAfterRender();
-  if (db && !dexHealthStarted) {
-    dexHealthStarted = true;
-    void monitorDexHealth();
-  }
-  if (view !== 'catalog') return;
-  $('#page').insertAdjacentHTML('afterbegin', `<section class="manga-hub" aria-label="تصفح MangaDex">
-    <h2>MangaDex</h2>
-    <form id="manga-hub-form" class="actions">
-      <input name="title" type="search" maxlength="150" aria-label="عنوان المانجا في MangaDex" placeholder="ابحث في MangaDex" value="${esc(mangaHub.query)}" required>
-      <button class="primary">بحث</button>
-      <label for="manga-hub-ar">لغة المكتبة</label>
-      <select id="manga-hub-ar">${languageOptions()}</select>
-    </form>
-    <div class="actions">
-      <label for="manga-hub-type">نوع العمل</label>
-      <select id="manga-hub-type">${[['','الكل'],['ja','مانجا يابانية'],['ko','مانهوا كورية']].map(([value, label]) => `<option value="${value}" ${mangaHub.type === value ? 'selected' : ''}>${label}</option>`).join('')}</select>
-      <button data-dex-browse="catalog" aria-pressed="${mangaHub.action === 'catalog'}">كل الأعمال</button>
-      <button data-dex-browse="latest" aria-pressed="${mangaHub.action === 'latest'}">أحدث الفصول</button>
-      <button data-dex-browse="popular" aria-pressed="${mangaHub.action === 'popular'}">الأكثر شعبية</button>
-      <button data-dex-browse="rated" aria-pressed="${mangaHub.action === 'rated'}">الأعلى تقييمًا</button>
-      <button data-action="add-site">المصادر</button>
-    </div>
-    <p id="manga-hub-status" class="note" role="status"></p><div id="manga-hub-results"></div>
-    <div id="manga-hub-pagination" class="actions" hidden><button id="manga-hub-prev">السابق</button><span id="manga-hub-page"></span><button id="manga-hub-next">التالي · أعمال أكثر</button></div>
-  </section>`);
-  paintMangaHub();
-  if (db && !mangaHub.started && (typeof sourceEngine === 'undefined' || sourceEngine.provider !== 'suwayomi')) void browseMangaDex('catalog');
-};
-
 const sitePresetForm = siteForm;
 siteForm = function() {
   sitePresetForm();
   $('#siteForm').insertAdjacentHTML('beforebegin', `<div class="manga-hub-presets">
     <label for="sourcePreset">المصدر</label>
-    <select id="sourcePreset"><option value="dex">MangaDex · API رسمي</option><option value="engine">Suwayomi · محرك الإضافات</option><option value="comick">Comick · بحث وقراءة عبر المصدر</option><option value="proxy">مصدر مخصص · بروكسي الخلاصات</option></select>
+    <select id="sourcePreset"><option value="engine">Suwayomi · محرك الإضافات</option><option value="comick">Comick · بحث وقراءة عبر المصدر</option><option value="proxy">مصدر مخصص · بروكسي الخلاصات</option></select>
     <div id="sourcePresetActions" class="actions"><button data-dex-browse="latest">أحدث الفصول</button><button data-dex-browse="popular">الأكثر شعبية</button></div>
     <div id="sourceEngineInfo" hidden><p>قراءة مصادر Tachiyomi / Keiyoushi عبر خادم Suwayomi مستقل. يتطلب خادمًا متصلًا ومصادر مثبتة عليه.</p><button data-open-engine>فتح محرك الإضافات</button></div><div id="comickSearchPanel" hidden><p class="note">بحث بديل من Comick. تُفتح القراءة في المصدر الأصلي؛ الوصول إلى فصوله داخل لوكس غير متاح حاليًا. لا يطبق فلتر لغة مكتبة MangaDex على هذه النتائج.</p><form id="comickSearch"><label for="comickQuery">اسم العمل</label><input id="comickQuery" name="q" maxlength="150" placeholder="ابحث في Comick"><button class="primary">بحث / استكشاف</button></form><p id="comickSearchStatus" role="status"></p><div id="comickResults"></div></div>
   </div>`);

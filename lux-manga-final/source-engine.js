@@ -1,5 +1,5 @@
 const sourceEngine = { provider: 'suwayomi', sources: [], loaded: false, busy: false, page: 1, next: false, items: [], selected: '', message: '', revision: 0 };
-try { sourceEngine.provider = localStorage.getItem('lux.source.engine') === 'mangadex' ? 'mangadex' : 'suwayomi'; } catch {}
+try { localStorage.setItem('lux.source.engine','suwayomi'); } catch {}
 async function engineRequest(action, options = {}) {
   const response = await fetch('/api/suwayomi?' + new URLSearchParams({ action, adult: mangaHub.adult ? '1' : '0', ...options }), { signal: AbortSignal.timeout(28000) });
   const data = await response.json();
@@ -29,16 +29,17 @@ async function loadEngineSources() {
 function paintSourceEngine() {
   const panel = $('#source-engine-panel');
   if (!panel) return;
-  const engine = sourceEngine.provider === 'suwayomi';
-  const dex = $('.manga-hub');
-  if (dex) dex.hidden = engine;
-  panel.innerHTML = `<label for="libraryEngine">محرك المكتبة</label><select id="libraryEngine"><option value="mangadex" ${!engine?'selected':''}>MangaDex · المصدر الحالي</option><option value="suwayomi" ${engine?'selected':''}>Suwayomi · إضافات Tachiyomi / Keiyoushi</option></select>${engine?`<p>مصادر الإضافات المثبتة على خادمك. تُدار الإضافات من Suwayomi، وتُقرأ الفصول هنا في لوكس.</p><label for="engineSource">المصدر المثبت</label><select id="engineSource"><option value="">اختر المصدر</option>${sourceEngine.sources.filter(source=>!mangaHub.language||source.lang===mangaHub.language).map(source=>`<option value="${esc(source.id)}" ${sourceEngine.selected===String(source.id)?'selected':''}>${esc(source.name)} · ${esc(source.lang)}</option>`).join('')}</select><label for="engineLanguage">لغة المصادر</label><select id="engineLanguage">${languageOptions()}</select><form id="engineSearch"><label for="engineQuery">عنوان العمل</label><input id="engineQuery" maxlength="150" name="q"><button ${sourceEngine.busy?'disabled':''}>بحث</button></form><div class="actions"><button data-engine-browse="POPULAR" ${sourceEngine.busy?'disabled':''}>الأكثر شعبية</button><button data-engine-browse="LATEST" ${sourceEngine.busy?'disabled':''}>أحدث الأعمال</button><button data-engine-connect>إعادة الاتصال</button></div><p role="status">${esc(sourceEngine.message)}</p><div>${sourceEngine.items.map((book,index)=>`<button class="engine-result" data-engine-book="${index}">${esc(book.title)} · فتح الفهرس والتحقق من الفصول</button>`).join('')}</div><button data-engine-more ${!sourceEngine.next||sourceEngine.busy?'disabled':''}>تحميل المزيد</button>`:''}`;
+  panel.innerHTML = `<header class="engine-heading"><div><span class="eyetag">LUX / MANGA</span><h1>مكتبة المانجا والمانهوا</h1><p>اكتشف عملك القادم من المصادر العربية.</p></div><button data-engine-connect aria-label="تحديث المصادر">↻ تحديث المصادر</button></header>
+  <div class="engine-controls"><label for="engineSource">المصدر<select id="engineSource"><option value="">اختر المصدر</option>${sourceEngine.sources.filter(source=>!mangaHub.language||source.lang===mangaHub.language).map(source=>`<option value="${esc(source.id)}" ${sourceEngine.selected===String(source.id)?'selected':''}>${esc(source.name)}</option>`).join('')}</select></label><label for="engineLanguage">اللغة<select id="engineLanguage">${languageOptions()}</select></label><form id="engineSearch"><label for="engineQuery">ابحث عن عمل</label><div><input id="engineQuery" maxlength="150" name="q" value="${esc(sourceEngine.query||'')}" placeholder="اسم المانجا أو المانهوا…"><button class="primary" ${sourceEngine.busy?'disabled':''}>بحث</button></div></form></div>
+  <div class="engine-tabs"><button data-engine-browse="POPULAR" aria-pressed="${sourceEngine.type!=='LATEST'}">الأكثر شعبية</button><button data-engine-browse="LATEST" aria-pressed="${sourceEngine.type==='LATEST'}">أحدث الأعمال</button><span role="status">${esc(sourceEngine.message)}</span></div>
+  <div class="engine-grid" aria-busy="${sourceEngine.busy}">${sourceEngine.items.map((book,index)=>`<article class="engine-card"><button class="engine-cover" data-engine-book="${index}" aria-label="تفاصيل ${esc(book.title)}"><img src="${esc(book.cover)}" alt="غلاف ${esc(book.title)}" loading="lazy" referrerpolicy="no-referrer" onerror="this.onerror=null;this.src='/novel-cover-fallback.svg'"><span>عرض الفصول ←</span></button><div class="engine-card-copy"><small>${esc(book.kind)} · عربي</small><h2 dir="auto">${esc(book.title)}</h2><button data-engine-book="${index}">تصفح العمل ←</button></div></article>`).join('')}</div>
+  ${!sourceEngine.busy&&!sourceEngine.items.length?'<div class="empty">اختر مصدرًا أو جرّب البحث عن عمل.</div>':''}<div class="engine-pagination"><button data-engine-more ${!sourceEngine.next||sourceEngine.busy?'disabled':''}>${sourceEngine.busy?'جارٍ التحميل…':'تحميل المزيد'}</button></div>`;
 }
 const renderBeforeSourceEngine = render;
 render = function() {
   renderBeforeSourceEngine();
   if (view !== 'catalog') return;
-  $('#page').insertAdjacentHTML('afterbegin', '<section id="source-engine-panel" class="backup-panel"></section>');
+  $('#page').innerHTML='<section id="source-engine-panel"></section>'+ (books().filter(book=>mediaOf(book)==='manga').length?'<section class="engine-saved"><h2>من مكتبتك</h2><div class="studio-grid">'+books().filter(book=>mediaOf(book)==='manga').map(card).join('')+'</div></section>':'');
   paintSourceEngine();
   if (sourceEngine.provider === 'suwayomi' && !sourceEngine.loaded) void loadEngineSources();
   if (db && !sourceEngine.deepOpened && /^\d+$/.test(engineDeepLink.get('suwayomi') || '')) {
@@ -47,7 +48,8 @@ render = function() {
   }
 };
 async function browseEngine(type, query = '', more = false) {
-  if (sourceEngine.busy || !sourceEngine.selected) { if(!sourceEngine.selected) toast('اختر مصدرًا مثبتًا أولًا.'); return; }
+  if (sourceEngine.busy) { sourceEngine.pending={type,query,more}; return; }
+  if (!sourceEngine.selected) { toast('اختر مصدرًا مثبتًا أولًا.'); return; }
   const revision = ++sourceEngine.revision;
   const adult = mangaHub.adult;
   sourceEngine.busy = true;
@@ -62,7 +64,7 @@ async function browseEngine(type, query = '', more = false) {
     sourceEngine.next = result.hasNextPage;
     sourceEngine.message = sourceEngine.items.length + ' نتائج في المصدر. تُجلب الفصول عند فتح الفهرس.';
   } catch(error) { sourceEngine.message = error.message; sourceEngine.next = false; }
-  finally { sourceEngine.busy = false; paintSourceEngine(); }
+  finally { sourceEngine.busy = false; paintSourceEngine(); if(sourceEngine.pending){const next=sourceEngine.pending;sourceEngine.pending=null;void browseEngine(next.type,next.query,next.more);} }
 }
 async function openEngineBook(id, chapterId) {
   const adult = mangaHub.adult;
@@ -104,7 +106,7 @@ document.addEventListener('change', event => {
     render();
     if(sourceEngine.provider==='mangadex'&&!mangaHub.started) void browseMangaDex('catalog');
   }
-  if (event.target.id === 'engineSource') { sourceEngine.selected = event.target.value; sourceEngine.items=[]; sourceEngine.next=false; sourceEngine.revision++; }
+  if (event.target.id === 'engineSource') { sourceEngine.selected = event.target.value; sourceEngine.items=[]; sourceEngine.next=false; sourceEngine.revision++; void browseEngine('POPULAR'); }
   if (event.target.id === 'engineLanguage') {
     mangaHub.language = event.target.value;
     try { localStorage.setItem('lux.library.language',mangaHub.language); } catch {}

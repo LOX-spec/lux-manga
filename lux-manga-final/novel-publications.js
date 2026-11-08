@@ -63,6 +63,7 @@ const LuxNovelPublications = (() => {
   }
 
   function seedDatabase() {
+    if (globalThis.LUX_TEST_DEMOS !== true) return [];
     try {
       const saved = localStorage.getItem(seedKey);
       if (saved !== null) {

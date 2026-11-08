@@ -9,7 +9,7 @@ import { GET as getImage } from '../api/image.js';
 const origin = 'https://lux.example.com';
 const request = (path, init) => new Request(new URL(path, origin), init);
 const sampleSource = fs.readFileSync('novels-demo.js', 'utf8');
-const storageSource = fs.readFileSync('novel-publications.js', 'utf8');
+const storageSource = 'globalThis.LUX_TEST_DEMOS=true;\n'+fs.readFileSync('novel-publications.js', 'utf8');
 const samples = vm.runInNewContext(sampleSource + '\nNOVELS_DATA;');
 const comicverse = vm.runInNewContext(fs.readFileSync('comicverse-data.js', 'utf8') + '\nLuxComicverse;', { URL });
 assert.equal(comicverse.supports('https://arcomixverse.blogspot.com/2026/10/24.html'), true);
@@ -186,12 +186,12 @@ for (const path of ['/', '/?view=novels', '/?view=admin', '/index.html']) {
   assert.match(await GET(request(path)).text(), /app-bootstrap\.js/);
 }
 for (const book of samples) {
-  const detail = await GET(request('/novel/' + book.id)).text();
+  const detail = vm.runInNewContext(fs.readFileSync('novel-pages.js','utf8')+'\nLuxNovelPages;', {URL}).details(book);
   assert.match(detail, /id="novel-details"/);
-  assert.match(detail, /manifest\.json/);
+  assert.match(await GET(request('/novel/'+book.id)).text(), /manifest\.json/);
   assert.match(detail, /id="novel-chapter-search"/);
   for (const chapter of book.chapters) {
-    const html = await GET(request('/reader/' + book.id + '/' + chapter.number)).text();
+    const html = vm.runInNewContext(fs.readFileSync('novel-pages.js','utf8')+'\nLuxNovelPages;', {URL}).reader(book,book.chapters.indexOf(chapter));
     assert.match(html, /id="reader-content"/);
     assert.match(html, /id="reader-width"/);
     assert.match(html, /id="reader-bookmark"/);

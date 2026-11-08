@@ -39,7 +39,14 @@ async function handle(request) {
   if (pathname === '/api/source') return source(request);
   if (pathname === '/api/image') return image(request);
   if (pathname === '/api/mangadex' && request.method === 'GET') return mangadex(request);
-  if (pathname === '/api/suwayomi' && request.method === 'GET') return suwayomi(request);
+  if (pathname === '/api/suwayomi' && request.method === 'GET') {
+    if(process.env.LUX_LIVE_PREVIEW === '1') {
+      const response=await fetch('https://lux-manga-4b3b.vercel.app/api/suwayomi' + new URL(request.url).search);
+      const headers=new Headers(response.headers);headers.delete('content-encoding');headers.delete('content-length');
+      return new Response(response.body,{status:response.status,headers});
+    }
+    return suwayomi(request);
+  }
   if (pathname === '/api/comick' && request.method === 'GET') return comick(request);
   if (!['GET', 'HEAD'].includes(request.method)) return new Response('Method not allowed', { status: 405 });
   const file = resolve(root, '.' + decodeURIComponent(pathname));
