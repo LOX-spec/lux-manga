@@ -2,6 +2,7 @@ const mangaFields = 'id title author description genre thumbnailUrl realUrl sour
 const json = (value, status = 200) => Response.json(value, { status, headers: { 'Cache-Control': 'no-store' } });
 const integer = value => /^\d+$/.test(String(value || '')) && Number.isSafeInteger(Number(value)) && Number(value) > 0;
 const blocked = manga => manga.source?.isNsfw || (manga.genre || []).some(tag => /^(hentai|erotica|pornographic)$/i.test(tag.trim()));
+const removedSources = new Set(['917436262447415426','335499577904379512']);
 
 function configuration() {
   if (!process.env.SUWAYOMI_URL) return null;
@@ -33,12 +34,13 @@ export async function GET(request) {
     const fields = '{ ' + mangaFields + ' }';
     if (action === 'sources') {
       const data = await graphql('query { sources { nodes { id name lang isNsfw supportsLatest } } }');
-      const sources = data.sources.nodes.filter(source => source.id !== '0' && source.lang !== 'localsourcelang' && (allowAdult || !source.isNsfw))
+      const sources = data.sources.nodes.filter(source => !removedSources.has(String(source.id)) && source.id !== '0' && source.lang !== 'localsourcelang' && (allowAdult || !source.isNsfw))
         .sort((a, b) => a.name.localeCompare(b.name, 'en'));
       return json({ configured: true, sources });
     }
     if (action === 'browse') {
       const source = params.get('source') || '';
+      if(removedSources.has(source))return json({error:'أُزيل هذا المصدر من المكتبة. اختر مصدرًا متاحًا.',code:'SOURCE_REMOVED'},410);
       const page = Number(params.get('page') || 1);
       const type = params.get('type') || 'POPULAR';
       if (!/^-?\d{1,19}$/.test(source) || !Number.isSafeInteger(page) || page < 1 || page > 10000 || !['SEARCH', 'POPULAR', 'LATEST'].includes(type)) return json({ error: 'معاملات المصدر غير صالحة.' }, 400);

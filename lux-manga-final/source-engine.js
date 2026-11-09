@@ -17,6 +17,7 @@ async function loadEngineSources() {
   try {
     const result = await engineRequest('sources');
     sourceEngine.sources = result.sources;
+    if(!result.sources.some(source=>String(source.id)===sourceEngine.selected))sourceEngine.selected='';
     sourceEngine.message = result.configured ? 'اختر مصدرًا مثبتًا على الخادم لبدء التصفح.' : result.message;
     sourceEngine.loaded = true;
     if (result.configured && !sourceEngine.selected) {
