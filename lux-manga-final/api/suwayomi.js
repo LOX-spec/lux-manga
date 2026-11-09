@@ -24,9 +24,9 @@ export async function GET(request) {
     const allowAdult = params.get('adult') === '1';
     async function graphql(query, variables = {}) {
       const response = await fetch(config.origin + '/api/graphql', { method: 'POST', redirect: 'error', headers: config.headers, body: JSON.stringify({ query, variables }), signal });
-      if (!response.ok) throw Error('Engine HTTP ' + response.status);
+      if (!response.ok) {const error=Error('Engine HTTP');error.code=[401,403].includes(response.status)?'ENGINE_AUTH':'ENGINE_UNAVAILABLE';throw error;}
       const result = await response.json();
-      if (result.errors?.length || !result.data) throw Error('Engine GraphQL failed');
+      if (result.errors?.length || !result.data) {const error=Error('Engine GraphQL failed');const description=(result.errors||[]).map(item=>item.message||'').join(' ');error.code=/cloudflare|403|captcha/i.test(description)?'SOURCE_BLOCKED':['browse','details','pages'].includes(action)?'SOURCE_UNAVAILABLE':'ENGINE_GRAPHQL';throw error;}
       return result.data;
     }
     const permitted = manga => allowAdult || !blocked(manga);
@@ -73,7 +73,7 @@ export async function GET(request) {
     if (!cover && (!Number.isInteger(page) || page < 0 || page >= info.chapter.pageCount)) return json({ error: 'صفحة غير صالحة.' }, 400);
     const path = cover ? '/api/v1/manga/' + id + '/thumbnail' : '/api/v1/manga/' + info.chapter.mangaId + '/chapter/' + info.chapter.sourceOrder + '/page/' + page;
     const image = await fetch(config.origin + path, { headers: config.headers, signal, redirect: 'error' });
-    if (!image.ok || !/^image\//i.test(image.headers.get('content-type') || '')) { await image.body?.cancel(); throw Error('Image unavailable'); }
+    if (!image.ok || !/^image\//i.test(image.headers.get('content-type') || '')) { await image.body?.cancel();const error=Error('Image unavailable');error.code='IMAGE_UNAVAILABLE';throw error; }
     return new Response(image.body, { headers: { 'Content-Type': image.headers.get('content-type'), 'Cache-Control': 'private,max-age=300', 'X-Content-Type-Options': 'nosniff' } });
     function mapBook(item) {
       return { engine: 'suwayomi', engineId: item.id, engineSource: String(item.source.id), isNsfw: !!item.source.isNsfw,
@@ -81,7 +81,7 @@ export async function GET(request) {
         genres: item.genre || [], kind: (item.genre || []).some(tag => /webtoon|manhwa|long strip/i.test(tag)) ? 'مانهوا' : 'مانجا',
         cover: imageUrl('cover', item.id, 0, allowAdult), chapters: [] };
     }
-  } catch { return json({ error: 'تعذر الاتصال بمحرك Suwayomi. تحقق من الخادم والمصادقة وتوافق إصدار GraphQL.' }, 502); }
+  } catch(error) {const code=error.name==='TimeoutError'?'ENGINE_TIMEOUT':error.code||'ENGINE_UNAVAILABLE';const messages={SOURCE_BLOCKED:'المصدر يطلب تحقق حماية Cloudflare. جرّب مصدرًا آخر أو الاستيراد من كود الصفحة؛ خادم المكتبة يعمل.',SOURCE_UNAVAILABLE:'تعذر جلب بيانات هذا المصدر. قد يكون متوقفًا أو يحتاج تحديث إضافته. جرّب مصدرًا آخر.',ENGINE_AUTH:'تعذر توثيق اتصال خادم المكتبة. يلزم مراجعة إعدادات الاتصال.',ENGINE_GRAPHQL:'إصدار خادم المكتبة لا يدعم هذا الطلب.',ENGINE_TIMEOUT:'انتهت مهلة الاتصال. أعد المحاولة أو اختر مصدرًا آخر.',IMAGE_UNAVAILABLE:'تعذر تحميل هذه الصورة من المصدر. أعد المحاولة.',ENGINE_UNAVAILABLE:'خادم المكتبة غير متاح مؤقتًا. أعد المحاولة لاحقًا.'};return json({error:messages[code]||messages.ENGINE_UNAVAILABLE,code},code==='ENGINE_TIMEOUT'?504:502); }
 }
 function safeLink(value) { try { const url = new URL(value); return url.protocol === 'https:' && !url.username && !url.password ? url.href : ''; } catch { return ''; } }
 const imageUrl = (kind, id, page, adult) => '/api/suwayomi?' + new URLSearchParams({ action: 'image', kind, id, page, adult: adult ? '1' : '0' });

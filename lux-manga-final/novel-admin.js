@@ -6,7 +6,7 @@ function renderNovelAdmin() {
       <header class="novel-admin-intro">
         <div>
           <span class="eyetag" lang="en">LUX TRANSLATOR STUDIO</span>
-          <h1 id="novel-admin-title">لوحة إدارة الروايات</h1>
+          <p class="note">هذا الاستوديو يحفظ الأعمال على جهازك. لا ينشرها لجميع زوار الموقع؛ انقلها بين أجهزتك بالنسخة الاحتياطية.</p><h1 id="novel-admin-title">لوحة إدارة الروايات</h1>
           <p>أضف رواية، ثم انشر فصولها مباشرة في رف الروايات.</p>
         </div>
         <a href="/?view=novels">افتح رف الروايات ←</a>
@@ -33,7 +33,7 @@ function renderNovelAdmin() {
           <div class="novel-admin-field"><label for="novel-publish-status">حالة الرواية</label>
             <select id="novel-publish-status" name="status"><option>مستمرة</option><option>مكتملة</option></select>
           </div>
-          <button type="submit" class="primary">حفظ ونشر الرواية</button>
+          <button type="submit" class="primary">حفظ الرواية في مكتبتي</button>
           <p class="novel-admin-result" role="status"></p>
         </form>
         <form id="chapter-publish" class="novel-admin-panel">

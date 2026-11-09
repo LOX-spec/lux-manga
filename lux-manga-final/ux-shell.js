@@ -28,7 +28,7 @@ function uxDecorateCards(){
   }
   for(const article of document.querySelectorAll('.novel-sample-card')){
     const id=article.id.replace('sample-novel-','');
-    if(!article.querySelector('.ux-card-actions'))article.insertAdjacentHTML('afterbegin',`<div class="ux-card-actions"><button data-ux-publication="${esc(id)}" data-mode="favorite" aria-label="المفضلة">${studioIcon('favorites')}</button><button data-ux-publication="${esc(id)}" data-mode="later" aria-label="اقرأ لاحقًا">${studioIcon('later')}</button></div>`);
+    if(!article.querySelector('.ux-card-actions'))article.insertAdjacentHTML('afterbegin',`<div class="ux-card-actions"><button aria-pressed="${state.favorites.includes('publication-'+id)}" data-ux-publication="${esc(id)}" data-mode="favorite" aria-label="المفضلة">${studioIcon('favorites')}</button><button data-ux-publication="${esc(id)}" data-mode="later" aria-pressed="${listOf('publication-'+id)==='later'}" aria-label="اقرأ لاحقًا">${studioIcon('later')}</button></div>`);
   }
 }
 const uxPaintEngine=paintSourceEngine;

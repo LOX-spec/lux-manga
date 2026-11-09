@@ -215,7 +215,7 @@ const LuxNovelPublications = (() => {
 
   function restoreBackup(data) {
     if (data?.format !== 'lux-novels' || data.version !== 1 || !Array.isArray(data.books) ||
-        !data.books.length || !data.books.every(book => validBook(book) && book.chapters.every(validChapter))) {
+        !data.books.every(book => validBook(book) && book.chapters.every(validChapter))) {
       throw new Error('ملف النسخة الاحتياطية غير صالح.');
     }
     return locked(() => {
