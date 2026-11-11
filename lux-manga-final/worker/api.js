@@ -44,7 +44,7 @@ async function remote(input, accept, timeout = 18000) {
   throw new Error('إعادة توجيه متكررة.');
 }
 
-async function bytes(response, signal) {
+async function bytes(response, signal, maxBytes = limit) {
   if (!response.body) return Buffer.alloc(0);
   const reader = response.body.getReader();
   const parts = [];
@@ -54,7 +54,7 @@ async function bytes(response, signal) {
       const { done, value } = await reader.read();
       if (done) break;
       size += value.byteLength;
-      if (size > limit) throw new Error('الملف أكبر من حد الجلب المسموح (4 ميغابايت).');
+      if (size > maxBytes) throw new Error('الملف أكبر من حد الجلب المسموح ('+(maxBytes/1048576)+' ميغابايت).');
       parts.push(value);
     }
   } catch (error) {
@@ -163,7 +163,7 @@ export async function image(request) {
       await result.response.body?.cancel();
       throw new Error('المصدر لم يرسل صورة مدعومة');
     }
-    const data = await bytes(result.response, result.signal);
+    const data = await bytes(result.response, result.signal, 20 * 1024 * 1024);
     return new Response(data, { headers: {
       'Content-Type': type, 'Content-Length': String(data.length),
       'Cache-Control': 'private, max-age=86400', 'X-Content-Type-Options': 'nosniff'
