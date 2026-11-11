@@ -1,3 +1,4 @@
+import {onmaRequest,onmaSource} from '../worker/onma-source.js';
 const mangaFields = 'id title author description genre thumbnailUrl realUrl source { id name lang isNsfw }';
 const json = (value, status = 200) => Response.json(value, { status, headers: { 'Cache-Control': 'no-store' } });
 const integer = value => /^\d+$/.test(String(value || '')) && Number.isSafeInteger(Number(value)) && Number(value) > 0;
@@ -17,6 +18,7 @@ function configuration() {
 export async function GET(request) {
   const params = new URL(request.url).searchParams;
   const action = params.get('action') || 'sources';
+  if((action==='browse'&&params.get('source')===onmaSource.id)||(['details','pages'].includes(action)&&(params.get('id')||'').startsWith('onma_')))return onmaRequest(params);
   if (!['sources', 'browse', 'details', 'pages', 'image'].includes(action)) return json({ error: 'طلب محرك غير صالح.' }, 400);
   try {
     const config = configuration();
@@ -36,11 +38,11 @@ export async function GET(request) {
       const data = await graphql('query { sources { nodes { id name lang isNsfw supportsLatest } } }');
       const sources = data.sources.nodes.filter(source => !removedSources.has(String(source.id)) && source.id !== '0' && source.lang !== 'localsourcelang' && (allowAdult || !source.isNsfw))
         .sort((a, b) => a.name.localeCompare(b.name, 'en'));
-      return json({ configured: true, sources });
+      return json({ configured: true, sources:[...sources,onmaSource] });
     }
     if (action === 'browse') {
       const source = params.get('source') || '';
-      if(removedSources.has(source))return json({error:'أُزيل هذا المصدر من المكتبة. اختر مصدرًا متاحًا.',code:'SOURCE_REMOVED'},410);
+
       const page = Number(params.get('page') || 1);
       const type = params.get('type') || 'POPULAR';
       if (!/^-?\d{1,19}$/.test(source) || !Number.isSafeInteger(page) || page < 1 || page > 10000 || !['SEARCH', 'POPULAR', 'LATEST'].includes(type)) return json({ error: 'معاملات المصدر غير صالحة.' }, 400);

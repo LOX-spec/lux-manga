@@ -1,4 +1,4 @@
-const SHELL='lux-shell-v33',PAGES='lux-pages-v1',COVERS='lux-novel-covers-v1';
+const SHELL='lux-shell-v34',PAGES='lux-pages-v1',COVERS='lux-novel-covers-v1';
 const ART='lux-published-art-v1';
 let artWrites=Promise.resolve();
 const SAMPLE_PAGE_URLS = [];

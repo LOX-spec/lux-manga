@@ -28,7 +28,7 @@ try {
     else throw Error('Unexpected operation');
     return Response.json({data});
   };
-  assert.equal((await (await GET(request('action=sources'))).json()).sources.length,1);
+  assert.equal((await (await GET(request('action=sources'))).json()).sources.length,2);
   const browse = await (await GET(request('action=browse&source=9223372036854775800'))).json();
   assert.equal(browse.books.length,1);
   assert.equal(calls.find(call=>call.query.includes('fetchSourceManga')).variables.input.source,'9223372036854775800');
