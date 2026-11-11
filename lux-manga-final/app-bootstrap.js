@@ -9,7 +9,7 @@ const applicationScripts = [
   'novel-reader.js', 'media.js', 'discovery.js', 'scanner.js', 'source-delete.js',
   'collections.js', 'novels-demo.js', 'novel-publications.js', 'novel-pages.js',
   'novel-admin.js', 'novels-view.js', 'studio.js', 'comicverse-data.js',
-  'comicverse-source.js', 'comics-model.js', 'comics-hub.js', 'smart-import.js', 'universal-backup.js', 'automatic-sources.js', 'manga-hub.js', 'comfort-reader.js', 'interface-repairs.js', 'source-engine.js', 'source-welcome.js', 'ux-shell.js', 'install.js'
+  'comicverse-source.js', 'comics-model.js', 'comics-hub.js', 'smart-import.js', 'universal-backup.js', 'automatic-sources.js', 'manga-hub.js', 'comfort-reader.js', 'interface-repairs.js', 'source-engine.js', 'source-welcome.js', 'ux-shell.js', 'reading-upgrade.js', 'install.js'
 ];
 
 if (novelPage) {
