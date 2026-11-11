@@ -38,7 +38,7 @@ export async function GET(request) {
       const data = await graphql('query { sources { nodes { id name lang isNsfw supportsLatest } } }');
       const sources = data.sources.nodes.filter(source => !removedSources.has(String(source.id)) && source.id !== '0' && source.lang !== 'localsourcelang' && (allowAdult || !source.isNsfw))
         .sort((a, b) => a.name.localeCompare(b.name, 'en'));
-      return json({ configured: true, sources:[...sources,onmaSource] });
+      return json({ configured: true, sources });
     }
     if (action === 'browse') {
       const source = params.get('source') || '';
