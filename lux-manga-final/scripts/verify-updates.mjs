@@ -1,0 +1,22 @@
+import fs from 'node:fs';import vm from 'node:vm';import assert from 'node:assert/strict';
+const source=fs.readFileSync('auto-update.js','utf8');
+const handlers={},workerHandlers={},timers=[],messages=[];let reloads=0,saves=0,updates=0,busy=true,saveOK=true;
+const worker={postMessage:message=>messages.push(message)};
+const registration={waiting:worker,installing:null,addEventListener:(name,fn)=>workerHandlers[name]=fn,update:async()=>{updates++;}};
+const window={addEventListener:(name,fn)=>handlers[name]=fn,dispatchEvent:event=>handlers[event.type]?.(event)};
+const document={hidden:false,readyState:'loading',body:{classList:{contains:()=>true},append(){}},addEventListener:(name,fn)=>handlers['document:'+name]=fn,getElementById:()=>({textContent:''}),createElement:()=>({setAttribute(){},style:{}})};
+const context={window,document,navigator:{onLine:true,serviceWorker:{controller:{},register:async()=>registration,addEventListener:(name,fn)=>handlers['sw:'+name]=fn}},location:{reload:()=>reloads++},Event:class{constructor(type){this.type=type}},setInterval:(fn,ms)=>timers.push({fn,ms})};
+vm.createContext(context);vm.runInContext(source,context);
+const updater=window.LuxAutoUpdate;updater.configure({ready:()=>true,busy:()=>busy,save:async()=>{saves++;return saveOK;}});
+await updater.start();await updater.apply();assert.equal(saves,0);assert.equal(messages.length,0,'active download/import must defer update');
+busy=false;saveOK=false;await updater.apply();assert.equal(messages.length,0,'failed persistence must prevent activation');
+saveOK=true;await updater.apply();assert.equal(messages.length,1);assert.equal(messages[0].type,'SKIP_WAITING');assert.equal(reloads,0);
+registration.waiting=null;await handlers['sw:controllerchange']();await new Promise(resolve=>setImmediate(resolve));assert.equal(reloads,1,'new controller reloads automatically after successful save');
+document.hidden=true;const before=updates;await updater.check();assert.equal(updates,before,'hidden apps do not poll');document.hidden=false;context.navigator.onLine=false;await updater.check();assert.equal(updates,before,'offline app keeps current version');context.navigator.onLine=true;await updater.check();assert(updates>before);
+assert(timers.some(timer=>timer.ms===10000));assert(handlers.online);assert(handlers.focus);assert(handlers['document:visibilitychange']);
+assert(fs.readFileSync('index.html','utf8').includes('/auto-update.js'));assert(fs.readFileSync('scripts/build-sample-reader.mjs','utf8').includes('/auto-update.js'));
+assert(fs.readFileSync('sample-reader-controls.js','utf8').includes('lux:before-update'));assert(fs.readFileSync('comfort-reader.js','utf8').includes('lux:before-update'));
+assert(fs.readFileSync('sw.js','utf8').includes('if(!self.registration?.active)await self.skipWaiting()'));
+console.log('PASS: automatic checks, busy-operation deferral, save failure protection, activation/reload, offline/hidden suspension, reader persistence hooks and all entry points.');
+
+assert(fs.readFileSync('install.js','utf8').includes('luxAppReady=true;'));

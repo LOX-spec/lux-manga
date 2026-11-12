@@ -1,5 +1,6 @@
 /* Install, update and offline services share the existing library and reader. */
-const luxRelease='6.5';
+const luxRelease='6.6';
+let luxAppReady=false;
 let luxRegistration,luxUpdateReady=false,luxReloading=false,luxStorage;
 const luxDownloads=new Map();
 installPanel=function(){return `<fieldset class="install-panel"><legend>لوكس على جهازك</legend><p class="note">ثبّت تطبيق الويب على أندرويد أو ويندوز أو آيفون. إدارة التثبيت والعمل دون اتصال متاحة في صفحة واحدة.</p><button type="button" data-view="getapp">فتح تحميل التطبيق</button></fieldset>`};
@@ -20,11 +21,19 @@ async function luxPromptInstall(){
 renderGetApp=function(){const standalone=luxStandalone(),device=luxDevice();$('#page').innerHTML=`${studioHeading('لوكس، أقرب إليك.','ثبّت مكتبتك على جهازك، وخذ فصولك المحفوظة معك.')}<section class="install-hero"><div><span class="eyetag">YOUR LIBRARY. ANYWHERE.</span><h2>حكاياتك تستحق<br>مكانًا على شاشتك<span>.</span></h2><p>تطبيق ويب بأيقونة مستقلة، وقارئ مريح، وفصول تختار حفظها دون اتصال. نفس لوكس، في متناول يدك.</p><div class="actions"><button class="primary" data-lux-install ${standalone?'disabled':''}>${studioIcon('downloads')} ${standalone?'لوكس مفتوح كتطبيق':deferredInstall?'ثبّت لوكس الآن':'ثبّت لوكس على جهازك'}</button><button data-lux-copy>نسخ رابط التطبيق</button></div><small>نسخة الويب ${luxRelease} · ${standalone?'وضع التطبيق المستقل':device==='android'?'أندرويد':device==='windows'?'ويندوز':device==='ios'?'آيفون وآيباد':'متصفحك الحالي'}</small></div><div class="install-emblem" aria-hidden="true"><span>L</span><b>لوكس</b><small>فصلك القادم ينتظرك</small></div></section><div class="install-benefits"><div>${studioIcon('reading')}<b>من حيث توقفت</b><span>تقدمك وقوائمك محفوظة محليًا.</span></div><div>${studioIcon('downloads')}<b>قراءة دون اتصال</b><span>حمّل الفصل أولًا من القارئ.</span></div><div>${studioIcon('settings')}<b>على ذوقك</b><span>15 لونًا وقارئ قابل للتخصيص.</span></div></div><div class="install-platforms">${[['android','أندرويد','Chrome أو متصفح يدعم التثبيت'],['windows','ويندوز','Microsoft Edge أو Google Chrome'],['ios','آيفون وآيباد','Safari، ثم مشاركة وإضافة للشاشة الرئيسية']].map(([key,name,note])=>`<article class="${device===key?'current':''}"><span class="eyetag">${device===key?'جهازك الحالي':'LUX FOR '+key.toUpperCase()}</span><h3>${name}</h3><p>${note}</p><button data-lux-steps="${key}">خطوات التثبيت ${studioIcon('chevron')}</button></article>`).join('')}</div><section class="offline-health"><div><h3>جاهز للرحلة؟</h3><p id="luxOfflineStatus">${luxRegistration?.active?'واجهة التطبيق جاهزة للعمل دون اتصال.':'يجري التحقق من تجهيز واجهة التطبيق…'}</p><p class="note">المتاح دون اتصال هو الفصول المكتملة في «التحميلات». استيراد المصادر والفصول الجديدة يحتاج اتصالًا.</p></div><div class="actions"><button data-view="downloads">افتح التحميلات</button><button data-lux-storage>حماية التخزين من الإخلاء التلقائي</button></div><p id="luxStorageStatus" class="note" role="status">${luxStorageText()}</p></section><p class="note">بياناتك محفوظة في متصفح هذا الجهاز؛ لن تنتقل تلقائيًا لجهاز آخر. استخدم تصدير المكتبة واستعادتها من الإعدادات لنقل القوائم والتقدم.</p>`;luxReadStorage()};
 function luxStorageText(){return luxStorage?`المستخدم ${luxBytes(luxStorage.usage)} من ${luxBytes(luxStorage.quota)} المتاحة للموقع.${luxStorage.persisted?' التخزين الدائم مفعّل.':' يمكنك طلب حماية التخزين من الإخلاء التلقائي.'}`:'مساحة التخزين تُدار على هذا الجهاز.'}
 async function luxReadStorage(){try{if(!navigator.storage?.estimate)return;const value=await navigator.storage.estimate();luxStorage={...value,persisted:await navigator.storage.persisted?.()};const label=$('#luxStorageStatus');if(label)label.textContent=luxStorageText()}catch{}}
-function luxUpdateBanner(){let bar=$('#luxUpdateBar');if(!luxUpdateReady){bar?.remove();return}if(!bar){bar=document.createElement('div');bar.id='luxUpdateBar';bar.className='lux-update';bar.setAttribute('role','status');bar.innerHTML='<span>نسخة جديدة من لوكس جاهزة.</span><button data-lux-update>حفظ وتحديث</button><button data-lux-update-later aria-label="إخفاء إشعار التحديث">×</button>';document.body.append(bar)}}
-async function luxSetupWorker(){if(!('serviceWorker'in navigator))return;try{luxRegistration=await navigator.serviceWorker.register('/sw.js',{updateViaCache:'none'});const waiting=()=>{if(luxRegistration.waiting){luxUpdateReady=true;luxUpdateBanner()}};waiting();luxRegistration.addEventListener('updatefound',()=>{const next=luxRegistration.installing;next?.addEventListener('statechange',()=>{if(next.state==='installed'&&navigator.serviceWorker.controller)waiting()})});navigator.serviceWorker.addEventListener('controllerchange',()=>{if(luxReloading)location.reload()});navigator.serviceWorker.ready.then(()=>{const text=$('#luxOfflineStatus');if(text)text.textContent='واجهة التطبيق جاهزة للعمل دون اتصال.'});luxRegistration.update().catch(()=>{})}catch{const label=$('#luxOfflineStatus');if(label)label.textContent='لم يكتمل تجهيز العمل دون اتصال. افتح لوكس في متصفح يدعم تثبيت التطبيقات وحاول مجددًا.'}}
+function luxUpdateBanner(){if(luxUpdateReady)void window.LuxAutoUpdate?.apply();}
+async function luxSetupWorker(){
+  const updater=window.LuxAutoUpdate;if(!updater)return;
+  updater.configure({ready:()=>luxAppReady,busy:()=>!!(syncing.size||siteAuditRunning.size||luxDownloads.size),save:async()=>{
+    if(!await save())return false;
+    try{if(readerSession&&$('#modal')?.classList.contains('reader-modal'))sessionStorage.setItem('lux.update.reader',JSON.stringify({id:readerSession.id,ch:readerSession.ch}));}catch{}
+    return true;
+  }});
+  try{luxRegistration=await updater.start();void updater.check();}catch{}
+}
 window.addEventListener('beforeinstallprompt',()=>{if(view==='getapp')renderGetApp()});
 window.addEventListener('appinstalled',()=>{if(view==='getapp')renderGetApp()});
-async function luxUpdateApp(){if(syncing.size||siteAuditRunning.size||luxDownloads.size){toast('أوقف الفحص والتحميلات أولًا ليكتمل الحفظ قبل التحديث');return}if(!await save()){toast('لم يكتمل حفظ المكتبة. حاول مجددًا قبل التحديث');return}if(luxRegistration?.waiting){luxReloading=true;luxRegistration.waiting.postMessage({type:'SKIP_WAITING'})}else location.reload()}
+async function luxUpdateApp(){await window.LuxAutoUpdate?.check();await window.LuxAutoUpdate?.apply();}
 /* Completed chapters are committed only after all pages are cached. Partial jobs remain resumable. */
 downloadChapter=async function(id,ch){const b=get(id);ch=ch??state.progress[id]?.chapter??0;const c=b?.chapters[ch];if(!c)return;if(luxDownloads.has(c.url)){toast('هذا الفصل قيد التحميل بالفعل');return}if(luxDownloads.size>=2){toast('حمّل فصلين في كل مرة؛ انتظر أو أوقف أحدهما');return}const control=new AbortController();luxDownloads.set(c.url,control);state.downloadJobs??={};const job=state.downloadJobs[c.url]={bookId:id,chapterUrl:c.url,title:c.title,status:'running',done:0,total:c.images?.length||0,at:new Date().toISOString()};if(view==='downloads')renderDownloads();const update=()=>{const el=document.querySelector(`[data-job-progress="${id}-${ch}"]`);if(el){el.querySelector('progress').max=Math.max(1,job.total);el.querySelector('progress').value=job.done;el.querySelector('small').textContent=`${job.done} / ${job.total} صفحات`}const live=$('#luxReaderDownloadStatus');if(live&&readerSession?.id===id&&readerSession.ch===ch)live.textContent=`تحميل ${job.done} / ${job.total} ${mediaOf(b)==='novels'?'فقرات':'صفحات'}`};
  try{if(navigator.onLine===false)throw Error('أنت دون اتصال؛ أعد المحاولة بعد الاتصال لاستكمال الصفحات الناقصة.');await loadChapter(c);if(control.signal.aborted)throw new DOMException('Paused','AbortError');if(mediaOf(b)==='novels'){job.done=job.total=c.text.length;state.downloads[c.url]={bookId:id,title:c.title,count:c.text.length,kind:'text',time:new Date().toISOString()}}else{if(!('caches'in window))throw Error('حفظ الصور غير متاح في هذا المتصفح.');const cache=await caches.open('lux-pages-v1');job.total=c.images.length;let next=0;const results=await Promise.allSettled(Array.from({length:2},async()=>{try{while(next<c.images.length){if(control.signal.aborted)throw new DOMException('Paused','AbortError');const image=c.images[next++],key=proxy(image);const existing=await cache.match(key);if(!existing||!/^image\//i.test(existing.headers.get('content-type')||'')){const r=await fetch(key,{signal:control.signal});if(!r.ok||!/^image\//i.test(r.headers.get('content-type')||''))throw Error('تعذر تنزيل إحدى الصفحات. استكمل التحميل لاحقًا دون إعادة الصفحات المحفوظة.');await cache.put(key,r)}job.done++;update()}}catch(error){control.abort();throw error}}));const failure=results.find(r=>r.status==='rejected'&&r.reason.name!=='AbortError')||results.find(r=>r.status==='rejected');if(failure)throw failure.reason;state.downloads[c.url]={bookId:id,title:c.title,count:job.total,time:new Date().toISOString()}}job.status='complete';toast('اكتمل حفظ الفصل للقراءة دون اتصال')
@@ -38,6 +47,7 @@ window.addEventListener('pagehide',()=>{for(const s of state.sites)if(syncing.ha
 window.addEventListener('offline',()=>{for(const s of state.sites)if(syncing.has(s.id)){s.paused=true;s.discoveryError='انقطع الاتصال. تقدمك محفوظ؛ استكمل الفحص بعد الاتصال.'}for(const c of luxDownloads.values())c.abort();save()});
 async function luxStart(requested) {
   await init({ localFirst: ['novels', 'admin'].includes(requested) });
+  luxAppReady=true;
   for (const site of state.sites) {
     if (site.review?.status === 'running') {
       site.review.status = 'paused';
@@ -59,7 +69,7 @@ function luxBoot() {
   if (['reader', 'novels', 'admin'].includes(requested)) {
     document.getElementById('luxBootLoading')?.remove();
     if (requested === 'reader') {
-      if (params.get('library') === '1') renderLibraryNovelReader(params);
+      if (params.get('library') === '1') renderLibraryNovelReader(params).then(()=>{luxAppReady=!!db;});
       else renderNovelSampleReader(params);
       luxSetupWorker();
       return;
@@ -68,7 +78,7 @@ function luxBoot() {
   }
 
   luxSetupWorker();
-  luxStart(requested).catch(error => {
+  luxStart(requested).then(()=>window.dispatchEvent(new Event('lux:ready'))).catch(error => {
     console.error('Lux could not finish opening the library', error);
     const loading = document.getElementById('luxBootLoading');
     if (loading) loading.textContent = 'تعذّر فتح المكتبة. حدّث الصفحة للمحاولة مرة أخرى.';
@@ -76,3 +86,5 @@ function luxBoot() {
 }
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', luxBoot, { once: true });
 else luxBoot();
+
+window.addEventListener('lux:ready',()=>{try{const value=sessionStorage.getItem('lux.update.reader');if(!value)return;sessionStorage.removeItem('lux.update.reader');const position=JSON.parse(value);if(get(position.id))void read(position.id,position.ch);}catch{}});

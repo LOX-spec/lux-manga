@@ -173,6 +173,8 @@ drawReader = function(book, index) {
   const observer = new MutationObserver(() => { if (!reader.isConnected || !modal.open) cleanup(); });
   observer.observe(modal, { childList: true, attributes: true, attributeFilter: ['open'] });
   modal.addEventListener('scroll', scroll, { passive: true });
+  window.addEventListener('lux:before-update',savePosition);
+  modal.addEventListener('close',()=>window.removeEventListener('lux:before-update',savePosition),{once:true});
   images.forEach(image => {
     image.loading = 'lazy';
     image.decoding = 'async';

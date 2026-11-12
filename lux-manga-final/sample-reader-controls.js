@@ -141,6 +141,7 @@ function setupNovelChapter() {
     scrollTimer = setTimeout(savePosition, 200);
   }, { ...options, passive: true });
   window.addEventListener('pagehide', savePosition, options);
+  window.addEventListener('lux:before-update', savePosition, options);
   document.addEventListener('visibilitychange', () => { if (document.hidden) savePosition(); }, options);
   document.addEventListener('keydown', event => {
     if (event.target.matches('input,textarea,select,button') || event.ctrlKey || event.metaKey || event.altKey) return;

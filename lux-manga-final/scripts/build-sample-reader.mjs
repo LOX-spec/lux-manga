@@ -43,6 +43,7 @@ function documentHtml(view, title, css, markup = '') {
   <script src="/novel-publications.js" defer></script>
   <script src="/novel-pages.js" defer></script>
   <script src="/${view === 'novel' ? 'novel-details-controls' : 'sample-reader-controls'}.js" defer></script>
+  <script src="/auto-update.js" defer></script>
   <script src="/novel-page-runtime.js" type="module"></script>
 </head>
 <body>
