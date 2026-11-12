@@ -21,3 +21,15 @@ dialog{animation:lux-enter .18s ease}.reader-modal{background:var(--bg-body,var(
 @keyframes lux-enter{from{opacity:.35;transform:translateY(7px)}to{opacity:1;transform:none}}@keyframes lux-stars{to{transform:translate3d(35px,25px,0)}}@keyframes lux-float{to{transform:translateY(25px)}}@keyframes lux-cloud{to{transform:translate3d(12vw,20px,0)}}@keyframes lux-forest{to{transform:rotate(-10deg) translateY(15px)}}
 @media(max-width:600px){.azora-heading{align-items:start;flex-direction:column;gap:8px}.primary-hub{padding:16px}.primary-hub .studio-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.studio-card .card-copy{padding:12px}.studio-card h3{font-size:.96rem}.studio-card .card-bottom{font-size:.73rem}.lux-ambient{opacity:.4}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}.lux-ambient i{will-change:auto}}body.reduce-motion *,body.reduced-motion *{animation:none!important;transition:none!important}
+
+/* Cosmic scene stays below inert, readable interface surfaces. */
+.lux-cosmic-canvas{position:absolute;inset:0;width:100%;height:100%;z-index:-1;pointer-events:none;display:block}
+.lux-cosmic-canvas[hidden]{display:none}
+html[data-ambient="space"] .lux-ambient{opacity:.95}
+html[data-ambient="space"] .lux-ambient.cosmic-ready>i{display:none;animation:none}
+html[data-ambient="space"]{--lux-glass:color-mix(in srgb,var(--bg-card,#1c1a18) 92%,transparent)}
+html[data-ambient="space"] :is(.ux-discover,.primary-hub,.ux-intro,.ux-release,.ux-settings-grid>button,.studio-card,.comic-series-card,.novel-sample-card){background-color:var(--lux-glass);border-color:var(--border-color);box-shadow:0 10px 36px #00000025}
+html[data-ambient="space"] :is(.ux-discover,.ux-intro,.ux-release,.ux-settings-grid>button){backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+html[data-ambient="space"] :is(dialog,.reader-modal){background:var(--bg-card,#181719)!important}
+html[data-ambient="space"][data-theme="light"] .lux-ambient::after{content:'';position:absolute;inset:0;background:#f5f6f8d9;pointer-events:none}
+@media(max-width:700px){html[data-ambient="space"] .lux-ambient{opacity:.85}html[data-ambient="space"] .ux-settings-grid>button{backdrop-filter:none}}
