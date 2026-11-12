@@ -37,9 +37,8 @@ function documentHtml(view, title, css, markup = '') {
   <link rel="apple-touch-icon" href="/icon-192.png">
   <title>${escaped}</title>
   <style>${css}</style>
-  <link rel="stylesheet" href="/appearance.css"><link rel="stylesheet" href="/thmanyah-font.css">
+  <link rel="stylesheet" href="/appearance.css">
   <script src="/font-preferences.js"></script>
-  <script src="/release-watcher.js" defer></script>
   <script src="/novels-demo.js" defer></script>
   <script src="/novel-publications.js" defer></script>
   <script src="/novel-pages.js" defer></script>
@@ -62,7 +61,7 @@ export function buildSamplePages() {
   const pages = {};
   const coverAssets = {};
 
-  for (const book of []) {
+  for (const book of books) {
     const coverSvg = fs.readFileSync(resolve(root, '.' + book.cover), 'utf8');
     coverAssets[book.cover] = [coverSvg, 'image/svg+xml'];
     const cover = 'data:image/svg+xml;base64,' + Buffer.from(coverSvg).toString('base64');

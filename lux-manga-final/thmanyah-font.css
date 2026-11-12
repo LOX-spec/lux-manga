@@ -1,3 +1,0 @@
-@font-face{font-family:'Thmanyah Sans';src:url('/thmanyahsans-Bold.otf') format('opentype');font-style:normal;font-weight:700;font-display:swap}
-:root{--app-font:'Thmanyah Sans'}
-body,body *{font-family:var(--app-font,'Thmanyah Sans'),Tahoma,sans-serif!important}

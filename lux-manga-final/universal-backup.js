@@ -1,17 +1,13 @@
 const LuxLibraryBackup = (() => {
   const maxSize=48*1024*1024;
-  const readerKey=key=>/^lux\.picture\.position:[a-zA-Z0-9_-]{1,180}$/.test(key)||['lux.picture.zoom','lux.app.font','lux.library.language'].includes(key);
-  const savedKey=key=>readerKey(key)||/^(lux-novel|lux-sample-progress:|lux-reader-bookmark:|lux\.manga\.mode)/.test(key);
-  function readerSettings(){const settings={};for(let i=0;i<localStorage.length;i++){const key=localStorage.key(i);if(readerKey(key))settings[key]=localStorage.getItem(key);}return settings;}
   function parse(text) {
     if(text.length>maxSize)throw Error('حجم النسخة يتجاوز 48 ميغابايت.');
     const data=JSON.parse(text,(key,value)=>{if(['__proto__','constructor','prototype'].includes(key))throw Error('مفاتيح غير صالحة في النسخة.');return value;});
     if(data?.format!=='lux-library-complete'||data.version!==1||!data.library||data.novels?.format!=='lux-novels')throw Error('اختر نسخة المكتبة الشاملة من لوكس.');
     const library=data.library;
-    if(!Array.isArray(library.books)||!Array.isArray(library.sites)||!Array.isArray(library.favorites)||!library.progress||!library.lists||!Array.isArray(data.novels.books))throw Error('بنية النسخة غير مكتملة.');
+    if(!Array.isArray(library.books)||!Array.isArray(library.sites)||!Array.isArray(library.favorites)||!library.progress||!library.lists||!Array.isArray(data.novels.books)||!data.novels.books.length)throw Error('بنية النسخة غير مكتملة.');
     const validId=id=>typeof id==='string'&&/^[a-zA-Z0-9_-]{1,180}$/.test(id);
-    const validURL=url=>{if(typeof url!=='string')return false;if(/^\/(?!\/)[a-zA-Z0-9/_-]+\.(?:svg|png|jpe?g|webp|gif)$/.test(url)||/^data:image\/(png|jpeg|webp);base64,[a-zA-Z0-9+/=]+$/.test(url))return true;try{const parsed=new URL(url,'https://backup.invalid');if(parsed.username||parsed.password)return false;if(/^https?:\/\//.test(url))return ['http:','https:'].includes(parsed.protocol);return parsed.origin==='https://backup.invalid'&&parsed.pathname==='/api/suwayomi'&&parsed.searchParams.get('action')==='image'&&['cover','page'].includes(parsed.searchParams.get('kind'))&&/^\d+$/.test(parsed.searchParams.get('id')||'');}catch{return false;}};
-    if(data.readerSettings!==undefined){if(!data.readerSettings||typeof data.readerSettings!=='object'||Array.isArray(data.readerSettings))throw Error('إعدادات قراءة غير صالحة.');for(const[key,value]of Object.entries(data.readerSettings)){if(!readerKey(key)||typeof value!=='string'||value.length>10000)throw Error('إعداد قراءة غير صالح.');if(key.startsWith('lux.picture.position:')){const p=JSON.parse(value);if(!p||!validURL(p.chapter)||!Number.isInteger(p.page)||p.page<0||!['vertical','rtl'].includes(p.mode))throw Error('موضع قراءة غير صالح.');}else if(key==='lux.picture.zoom'&&(!Number.isFinite(Number(value))||Number(value)<50||Number(value)>250))throw Error('تكبير غير صالح.');else if(key==='lux.app.font'&&!['Thmanyah Sans','Tajawal','Cairo','IBM Plex Sans Arabic'].includes(value))throw Error('خط غير صالح.');else if(key==='lux.library.language'&&!/^[a-z-]{0,12}$/.test(value))throw Error('لغة غير صالحة.');}}
+    const validURL=url=>typeof url==='string'&&(/^https?:\/\//.test(url)||/^\/manga-sample-[\w-]+\.svg$/.test(url)||/^data:image\/(png|jpeg|webp);base64,[a-zA-Z0-9+/=]+$/.test(url));
     const seen=new Set();
     for(const book of library.books){
       if(!validId(book.id)||seen.has(book.id)||typeof book.title!=='string'||!Array.isArray(book.chapters)||!Array.isArray(book.genres)||!book.genres.every(tag=>typeof tag==='string')||!validURL(book.source))throw Error('أحد الأعمال غير صالح في النسخة.');
@@ -24,12 +20,12 @@ const LuxLibraryBackup = (() => {
     if(!library.favorites.every(validId)||Object.entries(library.lists).some(([id,list])=>!validId(id)||!['reading','later','completed','ignored',''].includes(list)))throw Error('قوائم غير صالحة.');
     return data;
   }
-  function snapshot(){if(!db)throw Error('انتظر تجهيز تخزين المكتبة قبل التصدير.');return {format:'lux-library-complete',version:1,exportedAt:new Date().toISOString(),library:structuredClone(state),novels:LuxNovelPublications.backup(),readerSettings:readerSettings(),mangaMode:localStorage.getItem('lux.manga.mode')||'vertical'};}
+  function snapshot(){if(!db)throw Error('انتظر تجهيز تخزين المكتبة قبل التصدير.');return {format:'lux-library-complete',version:1,exportedAt:new Date().toISOString(),library:structuredClone(state),novels:LuxNovelPublications.backup(),mangaMode:localStorage.getItem('lux.manga.mode')||'vertical'};}
   async function restore(data) {
     data=parse(JSON.stringify(data));
     if(syncing.size)throw Error('أوقف فحص المصادر قبل الاستيراد.');
     const previous=structuredClone(state), saved=new Map();
-    for(let i=0;i<localStorage.length;i++){const key=localStorage.key(i);if(savedKey(key))saved.set(key,localStorage.getItem(key));}
+    for(let i=0;i<localStorage.length;i++){const key=localStorage.key(i);if(/^(lux-novel|lux-sample-progress:|lux-reader-bookmark:|lux\.manga\.mode)/.test(key))saved.set(key,localStorage.getItem(key));}
     try {
       await LuxNovelPublications.restoreBackup(data.novels);
       state=Object.assign(emptyState(),data.library);
@@ -37,13 +33,12 @@ const LuxLibraryBackup = (() => {
       // Offline image cache files do not travel in JSON. Embedded local pages do.
       state.downloads={};state.downloadJobs={};
       localStorage.setItem('lux.manga.mode',data.mangaMode==='rtl'?'rtl':'vertical');
-      if(data.readerSettings){for(const key of [...saved.keys()])if(readerKey(key))localStorage.removeItem(key);for(const[key,value]of Object.entries(data.readerSettings))localStorage.setItem(key,value);}
       LuxChapterLinks.repairState(state);
       if(!await save())throw Error('تعذر حفظ المكتبة المستوردة.');
-      applyPrefs();if(typeof applyAppFont==='function')applyAppFont(localStorage.getItem('lux.app.font')||'Thmanyah Sans');if(typeof mangaHub!=='undefined'){mangaHub.language=localStorage.getItem('lux.library.language')||'';if(typeof sourceEngine!=='undefined'){sourceEngine.selected='';sourceEngine.items=[];sourceEngine.loaded=false;sourceEngine.revision++;}}render();return state.books.length;
+      applyPrefs();render();return state.books.length;
     } catch(error) {
       state=previous;
-      const keys=[];for(let i=0;i<localStorage.length;i++)keys.push(localStorage.key(i));for(const key of keys)if(savedKey(key)&&!saved.has(key))localStorage.removeItem(key);
+      for(const key of Object.keys(localStorage))if(/^(lux-novel|lux-sample-progress:|lux-reader-bookmark:|lux\.manga\.mode)/.test(key)&&!saved.has(key))localStorage.removeItem(key);
       for(const[key,value]of saved)localStorage.setItem(key,value);
       await save();throw error;
     }

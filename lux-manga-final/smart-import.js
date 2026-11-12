@@ -62,7 +62,14 @@ document.addEventListener('submit', async event => {
 });
 const smartRender = render;
 render = function() {
- const removed=state.books.filter(book=>book.siteId==='local-samples');
- if(removed.length){const ids=new Set(removed.map(book=>book.id));state.books=state.books.filter(book=>!ids.has(book.id));state.favorites=state.favorites.filter(id=>!ids.has(id));for(const id of ids){delete state.progress[id];delete state.lists[id];}save();}
+ if (state.preferences?.mangaSamplesVersion !== 2) {
+  state.preferences ??= {};
+  const hadSamples=state.books.some(book=>book.siteId==='local-samples');
+  if(hadSamples||!state.books.some(book=>mediaOf(book)==='manga')){
+   for(const sample of LuxMangaSamples.books(location.origin)){const existing=state.books.find(book=>book.id===sample.id);if(existing)Object.assign(existing,sample);else state.books.push(sample);}
+  }
+  state.preferences.mangaSamplesInitialized=true;state.preferences.mangaSamplesVersion=2;
+  save();
+ }
  return smartRender();
 };

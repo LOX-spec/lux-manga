@@ -1,4 +1,4 @@
-const fontChoices = ['Thmanyah Sans', 'Tajawal', 'Cairo', 'IBM Plex Sans Arabic'];
+const fontChoices = ['Tajawal', 'Cairo', 'IBM Plex Sans Arabic'];
 function applyAppFont(value) {
   const font = fontChoices.includes(value) ? value : 'Tajawal';
   document.documentElement.style.setProperty('--app-font', '"' + font + '"');

@@ -63,7 +63,6 @@ const LuxNovelPublications = (() => {
   }
 
   function seedDatabase() {
-    if (globalThis.LUX_TEST_DEMOS !== true) return [];
     try {
       const saved = localStorage.getItem(seedKey);
       if (saved !== null) {
@@ -215,7 +214,7 @@ const LuxNovelPublications = (() => {
 
   function restoreBackup(data) {
     if (data?.format !== 'lux-novels' || data.version !== 1 || !Array.isArray(data.books) ||
-        !data.books.every(book => validBook(book) && book.chapters.every(validChapter))) {
+        !data.books.length || !data.books.every(book => validBook(book) && book.chapters.every(validChapter))) {
       throw new Error('ملف النسخة الاحتياطية غير صالح.');
     }
     return locked(() => {

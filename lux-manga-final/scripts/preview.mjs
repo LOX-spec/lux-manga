@@ -7,7 +7,6 @@ import { GET as page, HEAD as pageHead } from '../api/page.js';
 import { POST as source } from '../api/source.js';
 import { GET as image } from '../api/image.js';
 import { GET as mangadex } from '../api/mangadex.js';
-import { GET as suwayomi } from '../api/suwayomi.js';
 import { GET as comick } from '../api/comick.js';
 import { normalizeRoute } from '../routing.js';
 
@@ -16,7 +15,6 @@ const origin = 'http://127.0.0.1:' + port;
 const root = resolve('public-build');
 const contentTypes = {
   '.css': 'text/css; charset=utf-8',
-  '.otf': 'font/otf',
   '.js': 'text/javascript; charset=utf-8',
   '.png': 'image/png',
   '.svg': 'image/svg+xml',
@@ -40,14 +38,6 @@ async function handle(request) {
   if (pathname === '/api/source') return source(request);
   if (pathname === '/api/image') return image(request);
   if (pathname === '/api/mangadex' && request.method === 'GET') return mangadex(request);
-  if (pathname === '/api/suwayomi' && request.method === 'GET') {
-    if(process.env.LUX_LIVE_PREVIEW === '1') {
-      const response=await fetch('https://lux-manga-4b3b.vercel.app/api/suwayomi' + new URL(request.url).search);
-      const headers=new Headers(response.headers);headers.delete('content-encoding');headers.delete('content-length');
-      return new Response(response.body,{status:response.status,headers});
-    }
-    return suwayomi(request);
-  }
   if (pathname === '/api/comick' && request.method === 'GET') return comick(request);
   if (!['GET', 'HEAD'].includes(request.method)) return new Response('Method not allowed', { status: 405 });
   const file = resolve(root, '.' + decodeURIComponent(pathname));

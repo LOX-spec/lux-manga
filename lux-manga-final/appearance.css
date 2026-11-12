@@ -2,30 +2,26 @@
 
 :root {
   --app-font: 'Tajawal';
-  --theme-color: #c74838;
-  --bg-body: color-mix(in srgb, var(--theme-color) 14%, #101014);
-  --bg-surface: color-mix(in srgb, var(--theme-color) 20%, #19191f);
-  --bg-soft: color-mix(in srgb, var(--theme-color) 26%, #24242a);
-  --text-primary: #f8f6fa;
-  --text-muted: #c9c3ce;
-  --border-color: color-mix(in srgb, var(--theme-color) 32%, #62616b);
-  --bg-main: var(--bg-body);
-  --bg-card: var(--bg-surface);
-  --text-main: var(--text-primary);
+  --bg-main: #121110;
+  --bg-card: #1c1a18;
+  --bg-soft: #282522;
+  --text-main: #f5f0e9;
+  --text-muted: #b7ada3;
+  --border-color: #ffffff22;
 }
 html[data-theme="light"] {
-  --bg-body: color-mix(in srgb, var(--theme-color) 5%, #f6f7fa);
-  --bg-surface: color-mix(in srgb, var(--theme-color) 2%, #ffffff);
-  --bg-soft: color-mix(in srgb, var(--theme-color) 8%, #eef0f5);
-  --text-primary: #1f2937;
+  --bg-main: #f5f6f8;
+  --bg-card: #ffffff;
+  --bg-soft: #e9edf2;
+  --text-main: #1f2937;
   --text-muted: #526173;
-  --border-color: color-mix(in srgb, var(--theme-color) 18%, #cbd2dc);
+  --border-color: #cbd2dc;
 }
 html[data-theme="sepia"] {
-  --bg-body: color-mix(in srgb, var(--theme-color) 12%, #272019);
-  --bg-surface: color-mix(in srgb, var(--theme-color) 18%, #33291f);
-  --bg-soft: color-mix(in srgb, var(--theme-color) 22%, #423527);
-  --text-primary: #f4e8d6;
+  --bg-main: #272019;
+  --bg-card: #33291f;
+  --bg-soft: #423527;
+  --text-main: #f4e8d6;
   --text-muted: #c5b297;
   --border-color: #bca17b55;
 }
@@ -41,18 +37,10 @@ body.studio {
   background: var(--bg-main);
   color: var(--text-main);
 }
-body, body * {
+body, button, input, select, textarea, h1, h2, h3, article, p, label, legend, summary, small, a, .novel-body, .novel-reader-content {
   font-family: var(--app-font), Tahoma, sans-serif !important;
 }
 .studio .search { background: var(--bg-card); border-color: var(--border-color); }
-.studio :is(.studio-card,.resume-card,.comic-series-card,.novel-sample-card,.collection-sources,.settings-grid fieldset,.backup-panel,.reader-tools,.reader-utility,footer,#mobileNav,aside,.topbar,dialog) {
-  background-color: var(--bg-surface);
-  color: var(--text-primary);
-  border-color: var(--border-color);
-}
-.studio :is(.novel-discover-hero,.comic-hero,.comic-spotlight) { background-color: var(--bg-surface); }
-.studio #toast { background: var(--bg-surface); color: var(--text-primary); border-color: var(--border-color); }
-.studio button:not(.primary) { background-color: var(--bg-soft); color: var(--text-primary); border-color: var(--border-color); }
 .studio :is(aside,.topbar,dialog,.source-card,.studio-card,.resume-card,.manga-hub,.settings-grid fieldset,.novel-admin-panel,.novel-backup-panel,.source-overview>div,.backup-panel,.comfort-reader-tools,.comic-side-block,.comic-side-guide,.comic-series-card,.comic-catalogue-tools,.comic-source-strip,.lux-update,.download-row,.notification) {
   background: var(--bg-card);
   color: var(--text-main);
@@ -93,11 +81,7 @@ body:has(#novel-details) {
 .reader-reveal[hidden] { display: none; }
 .reader-clean .reader-reveal { display: block; }
 .reader-clean #readerReturnIndex { display: none; }
-#readerReturnIndex { position: sticky; top: .5rem; z-index: 8; margin-block-end: .5rem; width: auto; height: auto; white-space: nowrap; float: none; }
+#readerReturnIndex { position: sticky; top: .5rem; z-index: 8; margin-block-end: .5rem; }
 .reader-clean .comfort-reader-tools { opacity: 0; pointer-events: none; }
 .comfort-reader-tools { transition: opacity .15s ease; }
 @media (prefers-reduced-motion: reduce) { .comfort-reader-tools { transition: none; } }
-#source-engine-panel { display: block; }
-#source-engine-panel :is(select,input) { max-width: 100%; margin: .5rem; }
-#source-engine-panel .engine-result { display: block; width: 100%; text-align: start; margin-block: .5rem; }
-.manga-hub[hidden], #sourceEngineInfo[hidden] { display: none !important; }

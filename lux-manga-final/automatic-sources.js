@@ -1,8 +1,8 @@
 const dexSite = 'mangadex-auto';
 function allowedCachedWork(book) {
-  return mangaHub.adult || (!book.dexBlocked && !book.adultContent && !book.isNsfw &&
+  return book.siteId !== dexSite || mangaHub.adult || (!book.dexBlocked && !book.adultContent &&
     (!book.contentRating || ['safe', 'suggestive'].includes(book.contentRating)) &&
-    !(book.genres || []).some(tag => /^(?:hentai|erotica|pornographic)$/i.test(tag.trim())));
+    !(book.genres || []).some(tag => /^hentai$/i.test(tag.trim())));
 }
 function storeDexWork(work) {
   const book = upsertWork(work, dexSite);
@@ -32,7 +32,6 @@ async function dexRequest(action, id = '', offset = 0, language = '', q = '', { 
 }
 let dexUpdate, dexLastAttempt = 0, dexStatus = 'تتحدث أحدث الفصول المترجمة تلقائيًا.';
 async function updateDex() {
-  if (typeof sourceEngine !== 'undefined' && sourceEngine.provider === 'suwayomi') return;
   if (!db || navigator.onLine === false) return;
   if (dexUpdate) return dexUpdate;
   if (Date.now() - dexLastAttempt < 300000) return;
@@ -323,7 +322,6 @@ function flagDexOutage() {
   if (!dexHealthRetry && navigator.onLine !== false) dexHealthRetry = setTimeout(monitorDexHealth, 30000);
 }
 async function monitorDexHealth() {
-  if (typeof sourceEngine !== 'undefined' && sourceEngine.provider === 'suwayomi') return;
   if (dexHealthRunning || !db) return;
   clearTimeout(dexHealthRetry);
   dexHealthRetry = null;

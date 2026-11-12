@@ -9,7 +9,7 @@ const applicationScripts = [
   'novel-reader.js', 'media.js', 'discovery.js', 'scanner.js', 'source-delete.js',
   'collections.js', 'novels-demo.js', 'novel-publications.js', 'novel-pages.js',
   'novel-admin.js', 'novels-view.js', 'studio.js', 'comicverse-data.js',
-  'comicverse-source.js', 'comics-model.js', 'comics-hub.js', 'smart-import.js', 'universal-backup.js', 'automatic-sources.js', 'manga-hub.js', 'comfort-reader.js', 'interface-repairs.js', 'source-engine.js', 'source-welcome.js', 'ux-shell.js', 'reading-upgrade.js', 'install.js'
+  'comicverse-source.js', 'comics-model.js', 'comics-hub.js', 'manga-samples.js', 'smart-import.js', 'universal-backup.js', 'automatic-sources.js', 'manga-hub.js', 'comfort-reader.js', 'interface-repairs.js', 'install.js'
 ];
 
 if (novelPage) {
@@ -22,7 +22,6 @@ if (novelPage) {
   appearance.rel = 'stylesheet';
   appearance.href = '/appearance.css';
   document.head.append(appearance);
-  const fontSheet=document.createElement('link');fontSheet.rel='stylesheet';fontSheet.href='/thmanyah-font.css';document.head.append(fontSheet);
 }
 
 function loadScript(path, module = false) {

@@ -18,9 +18,6 @@
     },
     "api/image.js": {
       "maxDuration": 30
-    },
-    "api/suwayomi.js": {
-      "maxDuration": 30
     }
   },
   "rewrites": [
@@ -118,15 +115,6 @@
         {
           "key": "Content-Type",
           "value": "application/manifest+json"
-        }
-      ]
-    },
-    {
-      "source": "/version.json",
-      "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "no-store"
         }
       ]
     }
