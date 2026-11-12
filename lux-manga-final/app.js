@@ -1,7 +1,7 @@
 const $=s=>document.querySelector(s),esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const emptyState=()=>({books:[],sites:[],lists:{},progress:{},favorites:[],notifications:[],downloads:{},autoDownload:false});
 let state=emptyState(),view='home',query='',genre='الكل',filters={kind:'',author:'',from:'',to:'',sort:'updated'},db,readerSession=null;
-const books=()=>state.books.filter(book=>allowedCachedWork(book)&&visibleLibraryWork(book)),get=id=>state.books.find(b=>b.id===id&&allowedCachedWork(b)),listOf=id=>state.lists[id]||'',proxy=url=>url.startsWith('/manga-sample-')||/^data:image\/(png|jpeg|webp);base64,/.test(url)?url:'/api/image?url='+encodeURIComponent(url);
+const books=()=>state.books.filter(book=>allowedCachedWork(book)&&visibleLibraryWork(book)),get=id=>state.books.find(b=>b.id===id&&allowedCachedWork(b)),listOf=id=>state.lists[id]||'',proxy=url=>/^\/(?!\/)[a-zA-Z0-9/_-]+\.(?:svg|png|jpe?g|webp|gif)$/.test(url)||url.startsWith('/manga-sample-')||/^data:image\/(png|jpeg|webp);base64,/.test(url)?url:'/api/image?url='+encodeURIComponent(url);
 function toast(t){$('#toast').textContent=t;$('#toast').style.display='block';clearTimeout(window.toastTimer);window.toastTimer=setTimeout(()=>$('#toast').style.display='none',4500)}
 async function init({ localFirst = false, renderPage = true } = {}) {
   try {

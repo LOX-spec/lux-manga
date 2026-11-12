@@ -49,13 +49,25 @@ drawReader = function(book, index) {
   toolbar.className = 'comfort-reader-tools';
   toolbar.innerHTML = '<button data-comfort-prev aria-label="الصفحة السابقة">→</button><output aria-live="polite"></output><button data-comfort-next aria-label="الصفحة التالية">←</button><button data-comfort-mode></button><button data-lux-fullscreen>ملء الشاشة</button><button data-comfort-hide>إخفاء الأدوات</button>';
   reader.before(toolbar);
+  let zoom=100;
+  try{zoom=Math.max(50,Math.min(250,Number(localStorage.getItem('lux.picture.zoom'))||100));}catch{}
+  const zoomTools=document.createElement('span');zoomTools.className='reader-zoom-tools';
+  zoomTools.innerHTML='<button data-zoom-out aria-label="تصغير الصفحة">−</button><output aria-label="نسبة التكبير"></output><button data-zoom-in aria-label="تكبير الصفحة">+</button><button data-zoom-fit>ملاءمة الصفحة</button>';
+  toolbar.append(zoomTools);
+  function applyZoom(){reader.style.zoom=zoom/100;zoomTools.querySelector('output').textContent=zoom+'%';zoomTools.querySelector('[data-zoom-out]').disabled=zoom<=50;zoomTools.querySelector('[data-zoom-in]').disabled=zoom>=250;try{localStorage.setItem('lux.picture.zoom',zoom);}catch{}}
+  zoomTools.querySelector('[data-zoom-out]').onclick=()=>{zoom=Math.max(50,zoom-10);applyZoom();};
+  zoomTools.querySelector('[data-zoom-in]').onclick=()=>{zoom=Math.min(250,zoom+10);applyZoom();};
+  zoomTools.querySelector('[data-zoom-fit]').onclick=()=>{zoom=100;applyZoom();};
+  applyZoom();
   modal.classList.remove('reader-clean');
   modal.setAttribute('closedby', 'none');
   const exit = modal.querySelector('#close');
   exit.id = 'readerReturnIndex';
+  exit.classList.remove('close');
   exit.textContent = 'العودة للفهرس';
   exit.setAttribute('aria-label', 'العودة للفهرس');
-  exit.onclick = () => { readerSession = null; detail(book.id); };
+  const returnToIndex = () => { readerSession = null; detail(book.id); };
+  exit.onclick = returnToIndex;
   const reveal = document.createElement('button');
   reveal.className = 'reader-reveal';
   reveal.textContent = 'إظهار الأدوات';
@@ -114,14 +126,21 @@ drawReader = function(book, index) {
     layout(true);
   };
   toolbar.querySelector('[data-comfort-hide]').onclick = toggleTools;
-  reader.addEventListener('click', event => {
-    if (event.target.closest('a')) return;
-    const rect = reader.getBoundingClientRect();
-    if (event.clientX >= rect.left + rect.width * .25 && event.clientX <= rect.right - rect.width * .25) toggleTools();
-  });
+  const gapClick = event => {
+    if (!reader.isConnected || !modal.open || event.target.closest('button,a,input,select,textarea,label,.comfort-reader-tools,.reader-tools,.reader-heading,.chapter-end')) return;
+    const visible = images.filter(image => !image.closest('.manga-page').hidden);
+    const onPage = visible.some(image => {
+      const rect = image.getBoundingClientRect();
+      return event.clientX >= rect.left && event.clientX <= rect.right && event.clientY >= rect.top && event.clientY <= rect.bottom;
+    });
+    if (!onPage && (event.target === modal || event.target === reader || event.target.closest('.manga-page'))) {
+      event.stopPropagation();
+      returnToIndex();
+    }
+  };
+  modal.addEventListener('click', gapClick);
   reader.tabIndex = 0;
   reader.addEventListener('keydown', event => {
-    if (event.key === 'h') toggleTools();
     if (mode === 'rtl' && ['ArrowLeft', 'ArrowRight'].includes(event.key)) {
       event.preventDefault();
       event.stopPropagation();
@@ -145,6 +164,7 @@ drawReader = function(book, index) {
   const cleanup = () => {
     modal.removeEventListener('scroll', scroll);
     modal.removeEventListener('cancel', preventExit);
+    modal.removeEventListener('click', gapClick);
     modal.removeAttribute('closedby');
     modal.classList.remove('reader-clean');
     cancelAnimationFrame(frame);
