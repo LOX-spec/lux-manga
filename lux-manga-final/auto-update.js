@@ -3,7 +3,7 @@
   if(window.LuxAutoUpdate)return;
   let registration,starting,checking=false,applying=false,activated=false,pending=false;
   let hooks={ready:()=>!document.body.classList.contains('studio'),busy:()=>false,save:async()=>true};
-  const hadController=!!navigator.serviceWorker?.controller;
+  let hadController=!!navigator.serviceWorker?.controller;
   const dirtyForms=new Set();
   document.addEventListener('input',event=>{
     const field=event.target,form=field.closest?.('form');
@@ -56,7 +56,7 @@
         worker?.addEventListener('statechange',()=>{if(worker.state==='installed')waiting();});
       });
       navigator.serviceWorker.addEventListener('controllerchange',()=>{
-        if(!hadController)return;
+        if(!hadController){hadController=true;return;}
         activated=true;pending=true;void apply();
       });
       waiting();return registration;
