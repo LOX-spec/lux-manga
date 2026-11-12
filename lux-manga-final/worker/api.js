@@ -156,9 +156,12 @@ export async function image(request) {
       await result.response.body?.cancel();
       throw new Error('المصدر لم يرسل صورة مدعومة');
     }
-    const data = await bytes(result.response, result.signal);
-    return new Response(data, { headers: {
-      'Content-Type': type, 'Content-Length': String(data.length),
+    // Stream long webtoon images without buffering or the HTML 4 MiB limit.
+    // Keep a separate finite budget to avoid unbounded upstream responses.
+    const imageLimit=32*1024*1024;let received=0;
+    const stream=result.response.body.pipeThrough(new TransformStream({transform(chunk,controller){received+=chunk.byteLength;if(received>imageLimit)throw Error('الصورة أكبر من حد التحميل المسموح.');controller.enqueue(chunk)}}));
+    return new Response(stream, { headers: {
+      'Content-Type': type,
       'Cache-Control': 'private, max-age=86400', 'X-Content-Type-Options': 'nosniff'
     } });
   } catch (error) {
