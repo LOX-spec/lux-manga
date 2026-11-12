@@ -9,7 +9,7 @@ const applicationScripts = [
   'novel-reader.js', 'media.js', 'discovery.js', 'scanner.js', 'source-delete.js',
   'collections.js', 'novels-demo.js', 'novel-publications.js', 'novel-pages.js',
   'novel-admin.js', 'novels-view.js', 'studio.js', 'comicverse-data.js',
-  'comicverse-source.js', 'comics-model.js', 'comics-hub.js', 'manga-samples.js', 'smart-import.js', 'universal-backup.js', 'automatic-sources.js', 'manga-hub.js', 'comfort-reader.js', 'interface-repairs.js', 'ux-shell.js', 'install.js'
+  'comicverse-source.js', 'comics-model.js', 'comics-hub.js', 'manga-samples.js', 'smart-import.js', 'universal-backup.js', 'automatic-sources.js', 'manga-hub.js', 'comfort-reader.js', 'interface-repairs.js', 'ux-shell.js', 'ambient-ui.js', 'install.js'
 ];
 
 if (novelPage) {
@@ -22,6 +22,7 @@ if (novelPage) {
   appearance.rel = 'stylesheet';
   appearance.href = '/appearance.css';
   document.head.append(appearance);
+  const ambientSheet=document.createElement('link');ambientSheet.rel='stylesheet';ambientSheet.href='/ambient-ui.css';document.head.append(ambientSheet);
   const fontSheet=document.createElement('link');fontSheet.rel='stylesheet';fontSheet.href='/thmanyah-font.css';document.head.append(fontSheet);
 }
 
@@ -44,6 +45,7 @@ try {
       view === 'novel' ? 'novel-details-controls.js' : 'sample-reader-controls.js'
     ].map(path => loadScript(path)));
     await loadScript('novel-page-runtime.js', true);
+    await loadScript('ambient-ui.js');
   } else {
     if (url.href !== location.href) history.replaceState(null, '', url.pathname + url.search + url.hash);
     await Promise.all(applicationScripts.map(path => loadScript(path)));
