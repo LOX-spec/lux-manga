@@ -9,7 +9,7 @@ const applicationScripts = [
   'novel-reader.js', 'media.js', 'discovery.js', 'scanner.js', 'source-delete.js',
   'collections.js', 'novels-demo.js', 'novel-publications.js', 'novel-pages.js',
   'novel-admin.js', 'novels-view.js', 'studio.js', 'comicverse-data.js',
-  'comicverse-source.js', 'comics-model.js', 'comics-hub.js', 'manga-samples.js', 'smart-import.js', 'universal-backup.js', 'automatic-sources.js', 'manga-hub.js', 'reader-viewport.js', 'comfort-reader.js', 'interface-repairs.js', 'ux-shell.js', 'ambient-ui.js', 'library-refresh.js', 'ui-motion.js', 'install.js'
+  'comicverse-source.js', 'comics-model.js', 'comics-hub.js', 'manga-samples.js', 'smart-import.js', 'universal-backup.js', 'automatic-sources.js', 'manga-hub.js', 'reader-viewport.js', 'comfort-reader.js', 'interface-repairs.js', 'ux-shell.js', 'ambient-ui.js', 'library-refresh.js', 'ui-motion.js', 'v7-ui.js', 'install.js'
 ];
 
 if (novelPage) {
@@ -22,7 +22,7 @@ if (novelPage) {
   appearance.rel = 'stylesheet';
   appearance.href = '/appearance.css';
   document.head.append(appearance);
-  const ambientSheet=document.createElement('link');ambientSheet.rel='stylesheet';ambientSheet.href='/ambient-ui.css';document.head.append(ambientSheet);
+  const ambientSheet=document.createElement('link');ambientSheet.rel='stylesheet';ambientSheet.href='/ambient-ui.css';document.head.append(ambientSheet);const v7Sheet=document.createElement('link');v7Sheet.rel='stylesheet';v7Sheet.href='/v7-ui.css';document.head.append(v7Sheet);
   const fontSheet=document.createElement('link');fontSheet.rel='stylesheet';fontSheet.href='/thmanyah-font.css';document.head.append(fontSheet);
 }
 

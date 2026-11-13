@@ -2,7 +2,7 @@
 studioViews.release='التحديثات';
 state.preferences={...prefs(),ornaments:false};applyPrefs();
 let uxReleaseInfo=null,uxChecking=false;
-const uxSections=[['catalog','المانجا والمانهوا','reading'],['comics','الكوميكس','comics'],['novels','عالم الروايات','novels']];
+const uxSections=[['home','الكل','library'],['catalog','المانجا والمانهوا','reading'],['comics','الكوميكس','comics'],['novels','عالم الروايات','novels']];
 function uxSectionTabs(){return '<nav class="ux-sections" aria-label="أقسام اكتشف">'+uxSections.map(([key,label,icon])=>`<button data-view="${key}" aria-current="${(key==='comics'?['comics','dc','marvel','comic-other'].includes(view):view===key)?'page':'false'}">${studioIcon(icon)}${label}</button>`).join('')+'</nav>';}
 const uxOriginalNavigation=studioNavigation;
 studioNavigation=function(){
@@ -27,24 +27,24 @@ function uxDecorateCards(){
   }
 }
 function uxDiscover(){
-  const recent=books().filter(book=>state.progress[book.id]).sort((a,b)=>(state.progress[b.id].time||'').localeCompare(state.progress[a.id].time||'')).slice(0,6);
-  $('#page').innerHTML=`<section class="ux-discover"><span class="eyetag">LUX LIBRARY</span><h1>عالمك، بين الصفحات.</h1><p>اختر ما تحب أن تقرأه اليوم.</p>${uxSectionTabs()}<div class="ux-discover-links"><button data-view="updates">${studioIcon('updates')} آخر الفصول</button><button data-view="sites">${studioIcon('sites')} إدارة المصادر</button><button data-view="getapp">${studioIcon('downloads')} تحميل التطبيق</button></div></section>${recent.length?'<section class="ux-recent"><h2>تابع من حيث توقفت</h2><div class="studio-grid">'+recent.map(card).join('')+'</div></section>':'<section class="ux-intro"><h2>مكتبة على ذوقك</h2><p>احفظ أعمالك بالقلب، أو أضفها إلى «اقرأ لاحقًا». ستجدها دائمًا في قائمتك.</p><button class="primary" data-view="catalog">اكتشف المانجا والمانهوا ←</button></section>'}`;
+ const items=books().filter(b=>visibleLibraryWork(b)&&listOf(b.id)!=='ignored'&&matches(b));
+ $('#page').innerHTML='<section class="ux-discover"><h1>مكتبتك، بكل عوالمها.</h1>'+uxSectionTabs()+'<div class="ux-discover-links"><button data-view="sites">إدارة المصادر</button><button data-view="catalog">تصفح أزورا</button></div></section><section><h2>جميع الأعمال</h2><div class="studio-grid">'+items.map(card).join('')+'</div>'+(!items.length?'<p>ابدأ بتصفح أزورا أو أضف مصدرك من إدارة المصادر.</p>':'')+'</section>';
 }
 renderSettings=function(){
-  $('#page').innerHTML=`<header class="ux-page-heading"><h1>الإعدادات</h1><p>خيارات واضحة لتجربة تناسبك. تُطبّق تحديثات الموقع والتطبيق تلقائيًا بعد حفظ بياناتك، دون إعادة التثبيت.</p></header><div class="ux-settings-grid"><button data-ux-panel="appearance">${studioIcon('sun')}<span><b>المظهر وحجم العرض</b><small>السمة، الألوان، الخط وحجم النص</small></span>←</button><button data-ux-panel="reader">${studioIcon('reading')}<span><b>القراءة</b><small>عرض الصفحات والتحميل والتنقل</small></span>←</button><button data-view="release">${studioIcon('updates')}<span><b>التحقق من التحديثات</b><small>الإصدار الحالي وآخر إصدار متاح</small></span>←</button><button data-view="getapp">${studioIcon('downloads')}<span><b>تحميل التطبيق</b><small>التثبيت على الجوال والكمبيوتر</small></span>←</button></div><div class="ux-settings-footer"><button data-ux-help>دليل سريع</button><a href="/?view=admin">استوديو الناشر</a><small>لوكس ${luxRelease}</small></div>`;
+  $('#page').innerHTML=`<header class="ux-page-heading"><h1>الإعدادات</h1><p>خيارات واضحة لتجربة تناسبك. تُطبّق تحديثات الموقع والتطبيق تلقائيًا بعد حفظ بياناتك، دون إعادة التثبيت.</p></header><div class="ux-settings-grid"><button data-ux-panel="appearance">${studioIcon('sun')}<span><b>المظهر وحجم النص</b><small>السمة، الألوان، الخط وحجم النص</small></span>←</button><button data-ux-panel="reader">${studioIcon('reading')}<span><b>القراءة</b><small>عرض الصفحات والتحميل والتنقل</small></span>←</button><button data-view="release">${studioIcon('updates')}<span><b>التحقق من التحديثات</b><small>الإصدار الحالي وآخر إصدار متاح</small></span>←</button><button data-view="getapp">${studioIcon('downloads')}<span><b>تحميل التطبيق</b><small>التثبيت على الجوال والكمبيوتر</small></span>←</button></div><div class="ux-settings-footer"><button data-ux-help>دليل سريع</button><a href="/?view=admin">استوديو الناشر</a><small>لوكس ${luxRelease}</small></div>`;
 };
 function uxPreferenceSelect(key,label,options){return `<label>${label}<select data-ux-pref="${key}">${options.map(([value,text])=>`<option value="${value}" ${String(prefs()[key])===String(value)?'selected':''}>${text}</option>`).join('')}</select></label>`;}
 function uxPreferenceToggle(key,label){return `<label class="ux-toggle"><input type="checkbox" data-ux-pref="${key}" ${prefs()[key]?'checked':''}>${label}</label>`;}
 function uxAppearance(){
   let font='Thmanyah Sans';try{font=localStorage.getItem('lux.app.font')||font;}catch{}
-  show(`<section class="ux-preferences" id="uxAppearance"><h2>المظهر وحجم العرض</h2><p>تُطبّق اختياراتك وتُحفظ مباشرة.</p>${uxPreferenceSelect('theme','السمة',[['dark','داكن'],['sepia','بني مريح'],['light','فاتح']])}<label>لون الواجهة</label>${paletteHTML(prefs())}<label for="uxFont">خط القراءة والعناوين</label><select id="uxFont">${fontChoices.map(value=>`<option ${font===value?'selected':''}>${value}</option>`).join('')}</select><label for="uxFontSize">حجم النص <output id="uxFontValue">${prefs().font}%</output></label><input id="uxFontSize" type="range" min="85" max="140" step="5" value="${prefs().font}" data-ux-pref="font">${uxPreferenceToggle('compact','بطاقات أصغر')}<label for="motionMode">حركة الواجهة والخلفيات</label><select id="motionMode">${[['auto','حسب إعداد الجهاز'],['full','حركة كاملة · انزلاق ومؤشرات وبطاقات'],['reduced','تقليل الحركة']].map(([key,label])=>`<option value="${key}" ${window.LuxMotionPreference?.mode()===key?'selected':''}>${label}</option>`).join('')}</select><p class="note">اختر «حركة كاملة» لتفعيل الأنيميشن حتى إذا كان جهازك يطلب تقليل الحركة.</p><button class="primary" data-ux-close>تم</button></section>`);
+  show(`<section class="ux-preferences" id="uxAppearance"><h2>المظهر وحجم النص</h2><p>تُطبّق اختياراتك وتُحفظ مباشرة.</p>${uxPreferenceSelect('theme','السمة',[['dark','داكن'],['sepia','بني مريح'],['light','فاتح']])}<label>لون الواجهة</label>${paletteHTML(prefs())}<label for="uxFont">خط القراءة والعناوين</label><select id="uxFont">${fontChoices.map(value=>`<option ${font===value?'selected':''}>${value}</option>`).join('')}</select><label for="uxFontSize">حجم النص <output id="uxFontValue">${prefs().font}%</output></label><input id="uxFontSize" type="range" min="85" max="140" step="5" value="${prefs().font}" data-ux-pref="font">${uxPreferenceToggle('compact','بطاقات أصغر')}<label for="cornerRadius">استدارة الحواف <output id="radiusValue"></output></label><input id="cornerRadius" type="range" min="0" max="28" step="2" aria-label="استدارة الحواف"><button class="primary" data-ux-close>تم</button></section>`);
 }
 function uxReaderSettings(){show(`<section class="ux-preferences"><h2>إعدادات القراءة</h2>${uxPreferenceSelect('readerWidth','عرض صفحات المانجا',[['640','640 بكسل'],['820','820 بكسل'],['1000','1000 بكسل'],['full','ملاءمة الشاشة']])}${uxPreferenceSelect('gap','المسافة بين الصور',[[0,'بدون فواصل'],[8,'مسافة صغيرة'],[16,'مسافة مريحة']])}${uxPreferenceToggle('lazy','تحميل الصور عند الحاجة')}${uxPreferenceToggle('autoMark','حفظ الفصل مقروءًا عند إتمامه')}${uxPreferenceToggle('autoNext','الانتقال للفصل التالي بعد الإتمام')}<p>يمكن التكبير والتصغير وإخفاء الأدوات من داخل القارئ.</p><button class="primary" data-ux-close>تم</button></section>`);}
 function uxRenderRelease(){
-  $('#page').innerHTML=`<header class="ux-page-heading"><button data-view="settings">→ الإعدادات</button><h1>تحديثات لوكس</h1><p>آخر إصدار منشور من مستودع المشروع إلى الموقع.</p></header><section class="ux-release"><dl><div><dt>الإصدار الحالي</dt><dd>${luxRelease}</dd></div><div><dt>الإصدار المتاح</dt><dd>${esc(uxReleaseInfo?.version||'لم يُفحص بعد')}</dd></div></dl><p role="status" id="uxUpdateStatus">${esc(uxReleaseInfo?.message||'اضغط للتحقق من آخر إصدار متاح.')}</p><div class="actions"><button class="primary" data-ux-check ${uxChecking?'disabled':''}>${uxChecking?'جارٍ التحقق…':'التحقق من التحديثات'}</button>${uxReleaseInfo?.available?'<button data-ux-install-update>تحميل وتطبيق التحديث</button>':''}</div><p class="note">تُحفظ المكتبة قبل إعادة التحميل. التحقق يحتاج اتصالًا بالإنترنت.</p></section>`;
+  $('#page').innerHTML=`<header class="ux-page-heading"><button data-view="settings">→ الإعدادات</button><h1>تحديثات لوكس</h1><p>آخر إصدار منشور من مستودع المشروع إلى الموقع.</p></header><section class="ux-release"><dl><div><dt>الإصدار الحالي</dt><dd>${luxRelease}</dd></div><div><dt>الإصدار المتاح</dt><dd>${esc(uxReleaseInfo?.version||'لم يُفحص بعد')}</dd></div></dl><p role="status" id="uxUpdateStatus">${esc(uxChecking?'جارٍ التحقق من الإصدار المتاح…':uxReleaseInfo?.message||'اضغط للتحقق من آخر إصدار متاح.')}</p><div class="actions"><button class="primary" data-ux-check ${uxChecking?'disabled':''}>${uxChecking?'<span class="v7-spinner" aria-hidden="true"></span> جارٍ التحقق…':'التحقق من التحديثات'}</button>${uxReleaseInfo?.available?'<button data-ux-install-update>تحميل وتطبيق التحديث</button>':''}</div><p class="note">تُحفظ المكتبة قبل إعادة التحميل. التحقق يحتاج اتصالًا بالإنترنت.</p></section>`;
 }
 async function uxCheckUpdate(){
-  if(uxChecking)return;uxChecking=true;uxRenderRelease();
+  if(uxChecking)return;const started=Date.now();uxChecking=true;uxRenderRelease();
   try{
     const response=await fetch('/version.json?t='+Date.now(),{cache:'no-store',signal:AbortSignal.timeout(10000)});
     if(!response.ok)throw Error('تعذر الوصول إلى خدمة التحديثات.');
@@ -53,7 +53,7 @@ async function uxCheckUpdate(){
     await luxRegistration?.update();
     uxReleaseInfo={version:release.version||'إصدار منشور',available,message:available?'يوجد إصدار جديد جاهز للتحميل والتطبيق.':'أنت تستخدم آخر إصدار متاح.'};
   }catch(error){uxReleaseInfo={message:navigator.onLine?error.message:'أنت دون اتصال. أعد المحاولة بعد الاتصال.'};}
-  finally{uxChecking=false;if(view==='release')uxRenderRelease();}
+  finally{await new Promise(resolve=>setTimeout(resolve,Math.max(0,1200-(Date.now()-started))));uxChecking=false;if(view==='release')uxRenderRelease();}
 }
 const uxBaseRender=render;
 render=function(){
@@ -78,7 +78,7 @@ try{if(innerWidth>760&&localStorage.getItem('lux.sidebar.hidden')==='1')document
 const uxGo=go;
 go=function(target){const collapsed=document.body.classList.contains('desktop-collapsed');uxGo(target);if(innerWidth>760)menu(collapsed);};
 function uxWelcome(){show('<section class="ux-welcome"><span class="eyetag">مكتبة لوكس</span><h2>أهلًا بك في عالم القراءة</h2><p>١. اختر المانجا أو الكوميكس أو الروايات من «اكتشف».</p><p>٢. احفظ العمل بالقلب أو زر «اقرأ لاحقًا».</p><p>٣. افتح فصلًا، واضبط القارئ كما تحب.</p><button class="primary" data-ux-close>ابدأ القراءة</button></section>');}
-maybeGuide=function(){if(typeof showSourceSetup==='function')showSourceSetup();};
+maybeGuide=function(){};
 const uxOldNovelHref=novelReaderHref;
 novelReaderHref=function(id,index){const book=get(id);return book?.publicationId?LuxNovelPages.chapterUrl(book.publicationId,book.chapters[index||0]?.number):uxOldNovelHref(id,index);};
 function uxPublicationRecord(id){
