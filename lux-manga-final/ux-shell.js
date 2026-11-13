@@ -9,6 +9,7 @@ studioNavigation=function(){
   uxOriginalNavigation();
   $('#nav').innerHTML=[['home','اكتشف'],['history','السجل'],['favorites','المفضلة'],['later','اقرأ لاحقًا'],['downloads','التحميلات'],['settings','الإعدادات']].map(([key,label])=>studioNavItem(key,label)).join('');
   $('#mobileNav').innerHTML=[['home','اكتشف'],['favorites','المفضلة'],['later','لاحقًا'],['downloads','التحميلات'],['settings','الإعدادات']].map(([key,label])=>`<button data-view="${key}" class="${view===key?'active':''}">${studioIcon(key)}<span>${label}</span></button>`).join('');
+  if(['catalog','comics','dc','marvel','comic-other','novels'].includes(view))document.querySelectorAll('#nav [data-view=home],#mobileNav [data-view=home]').forEach(button=>{button.classList.add('active');button.setAttribute('aria-current','page');});
   const brand=$('.brand');brand.setAttribute('aria-label','مكتبة لوكس');
   brand.querySelector('span:last-child').innerHTML='مكتبة لوكس<small>LUX LIBRARY</small>';
 };
