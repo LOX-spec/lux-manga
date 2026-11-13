@@ -37,3 +37,5 @@ uxAppearance=function(){originalAmbientAppearance();const panel=document.querySe
 document.addEventListener('change',event=>{if(event.target.id==='ambientChoice')applyAmbient(event.target.value)});
 
 }
+
+document.addEventListener('change',event=>{if(event.target.id!=='motionMode')return;window.LuxMotionPreference?.set(event.target.value);if(typeof state!=='undefined'){state.preferences={...prefs(),reducedMotion:event.target.value==='reduced'};applyPrefs();void save();}});

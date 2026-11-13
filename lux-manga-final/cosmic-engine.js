@@ -8,7 +8,7 @@
       this.tick=this.tick.bind(this);this.sync=this.sync.bind(this);this.resize=this.resize.bind(this);
       this.onPointer=event=>{this.pointer.tx=event.clientX/innerWidth-.5;this.pointer.ty=event.clientY/innerHeight-.5;};
       addEventListener('resize',this.resize,{passive:true});addEventListener('pointermove',this.onPointer,{passive:true});
-      document.addEventListener('visibilitychange',this.sync);this.motion.addEventListener('change',this.sync);
+      document.addEventListener('visibilitychange',this.sync);addEventListener('lux:motionchange',this.sync);this.motion.addEventListener('change',this.sync);
       this.observer=new MutationObserver(this.sync);this.observer.observe(document.body,{attributes:true,attributeFilter:['class']});
       const modal=document.getElementById('modal');if(modal)this.observer.observe(modal,{attributes:true,attributeFilter:['open','class']});
       if(this.ctx){this.buildTextures();this.resize();}
@@ -40,7 +40,7 @@
       this.stars=Array.from({length:count},()=>({x:this.random(),y:this.random(),z:.2+this.random()*.8,size:.35+this.random()*1.05,phase:this.random()*Math.PI*2}));
       if(this.enabled)this.draw();
     }
-    reduced(){return this.motion.matches||document.body.classList.contains('reduce-motion');}
+    reduced(){return window.LuxMotionPreference?.reduced()??(this.motion.matches||document.body.classList.contains('reduce-motion'));}
     canAnimate(){return this.enabled&&!document.hidden&&!this.reduced()&&!document.querySelector('.reader-modal[open]')&&!document.getElementById('reader-content')&&!document.documentElement.classList.contains('reader-route');}
     setEnabled(enabled){this.enabled=enabled;this.canvas.hidden=!enabled;this.sync();}
     sync(){

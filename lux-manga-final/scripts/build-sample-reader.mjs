@@ -38,7 +38,7 @@ function documentHtml(view, title, css, markup = '') {
   <title>${escaped}</title>
   <style>${css}</style>
   <link rel="stylesheet" href="/appearance.css"><link rel="stylesheet" href="/thmanyah-font.css">
-  <script src="/font-preferences.js"></script>
+  <script src="/font-preferences.js"></script><script src="/motion-preferences.js"></script>
   <script src="/novels-demo.js" defer></script>
   <script src="/novel-publications.js" defer></script>
   <script src="/novel-pages.js" defer></script>

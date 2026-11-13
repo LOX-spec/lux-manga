@@ -114,4 +114,4 @@ body { background: radial-gradient(ellipse at 85% 0, #60432a25, transparent 54%)
 .chapter-list a { padding: .9rem 1rem; transition: background .15s, border-color .15s; }
 .chapter-list a:hover { background: #cba7770b; border-color: var(--gold); }
 .chapter-list [hidden] { display: none; }
-@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; transition: none !important; } }
+@media (prefers-reduced-motion: reduce) { html:not([data-motion="full"]) * { scroll-behavior: auto !important; transition: none !important; } }
