@@ -21,11 +21,14 @@ function transition(previous,next){clear();play(null,previous,next);}
 const entrance=entries=>{let index=0;for(const entry of entries){if(!entry.isIntersecting)continue;const card=entry.target;observer?.unobserve(card);pendingCards.delete(card);awaitingCards.delete(card);if(seen.has(card))continue;seen.add(card);if(!reduced())card.animate([{opacity:0,transform:'translateY(32px) scale(.96)'},{opacity:1,transform:'translateY(0) scale(1)'}],{duration:570,delay:Math.min(index++*65,325),easing,fill:'backwards'});}};
 const observer=typeof IntersectionObserver==='function'?new IntersectionObserver(entrance,{threshold:.035}):null;
 function indicators(){for(const [key,selector]of [['main','#nav button.active'],['mobile','#mobileNav button.active'],['discover','.ux-sections button[aria-current="page"]'],['publisher','.comic-publishers button[aria-pressed="true"],.publisher-tabs button.active'],['kind','[data-visual-kind][aria-pressed="true"]']]){
- const target=document.querySelector(selector),r=target?.getBoundingClientRect();let item=markers.get(key);
- if(!r||!r.width||!r.height||r.right<=0||r.left>=innerWidth||r.bottom<0||r.top>innerHeight){if(item)item.node.hidden=true;continue;}
- if(!item){const node=document.createElement('i');node.className='lux-morph-indicator';node.setAttribute('aria-hidden','true');document.body.append(node);item={node,rect:null,animation:null};markers.set(key,item);}
- const old=item.rect,node=item.node;node.hidden=false;node.style.cssText='left:'+r.left+'px;top:'+r.top+'px;width:'+r.width+'px;height:'+r.height+'px;';
- if(old&&!reduced()&&(Math.abs(old.left-r.left)>1||Math.abs(old.top-r.top)>1||Math.abs(old.width-r.width)>1)){item.animation?.cancel();item.animation=node.animate([{transform:'translate('+(old.left-r.left)+'px,'+(old.top-r.top)+'px) scale('+(old.width/r.width)+','+(old.height/r.height)+')'},{transform:'translate(0,0) scale(1)'}],{duration:500,easing,fill:'backwards'});}item.rect=r;
+ const target=document.querySelector(selector);let item=markers.get(key);
+ const container=target?.closest('#nav,#mobileNav,.ux-sections,.comic-publishers,.publisher-tabs,.visual-kind-tabs');
+ if(!target||!container||!target.offsetWidth||!target.offsetHeight){if(item)item.node.hidden=true;continue;}
+ container.classList.add('lux-morph-container');
+ if(!item){const node=document.createElement('i');node.className='lux-morph-indicator';node.setAttribute('aria-hidden','true');item={node,rect:null,animation:null};markers.set(key,item);}
+ const inset=3,r={left:target.offsetLeft+inset,top:target.offsetTop+inset,width:Math.max(0,target.offsetWidth-inset*2),height:Math.max(0,target.offsetHeight-inset*2)},old=item.rect,node=item.node;
+ if(node.parentElement!==container)container.append(node);node.hidden=false;node.style.cssText='left:'+r.left+'px;top:'+r.top+'px;width:'+r.width+'px;height:'+r.height+'px;';
+ if(old&&!reduced()&&(Math.abs(old.left-r.left)>1||Math.abs(old.top-r.top)>1||Math.abs(old.width-r.width)>1)){item.animation?.cancel();item.animation=node.animate([{transform:'translate('+(old.left-r.left)+'px,'+(old.top-r.top)+'px) scale('+(old.width/r.width)+','+(old.height/r.height)+')'},{transform:'translate(0,0) scale(1)'}],{duration:440,easing,fill:'backwards'});}item.rect=r;
 }}
 function decorate(){scheduled=0;for(const card of awaitingCards){if(!card.isConnected){observer?.unobserve(card);pendingCards.delete(card);awaitingCards.delete(card);}}for(const card of page.querySelectorAll('.studio-card,.comic-series-card,.novel-sample-card')){if(seen.has(card)||pendingCards.has(card))continue;if(observer){pendingCards.add(card);awaitingCards.add(card);observer.observe(card);}else seen.add(card);}indicators();}
 function schedule(){if(!scheduled)scheduled=requestAnimationFrame(decorate);}

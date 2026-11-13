@@ -52,12 +52,16 @@ drawReader = function(book, index) {
   let zoom=100;
   try{zoom=Math.max(50,Math.min(250,Number(localStorage.getItem('lux.picture.zoom'))||100));}catch{}
   const zoomTools=document.createElement('span');zoomTools.className='reader-zoom-tools';
-  zoomTools.innerHTML='<button data-zoom-out aria-label="تصغير الصفحة">−</button><output aria-label="نسبة التكبير"></output><button data-zoom-in aria-label="تكبير الصفحة">+</button><button data-zoom-fit>ملاءمة الصفحة</button>';
+  zoomTools.innerHTML='<button data-zoom-out aria-label="تصغير الصفحة">−</button><output aria-label="نسبة التكبير"></output><button data-zoom-in aria-label="تكبير الصفحة">+</button><button data-zoom-fit>ملاءمة الصفحة</button><select data-reader-fit aria-label="طريقة ملاءمة الصورة"><option value="page">الصفحة كاملة</option><option value="width" selected>ملاءمة العرض</option><option value="height">ملاءمة الارتفاع</option></select><small id="readerViewportStatus" role="status" aria-live="polite"></small>';
   toolbar.append(zoomTools);
-  function applyZoom(){reader.style.zoom=zoom/100;zoomTools.querySelector('output').textContent=zoom+'%';zoomTools.querySelector('[data-zoom-out]').disabled=zoom<=50;zoomTools.querySelector('[data-zoom-in]').disabled=zoom>=250;try{localStorage.setItem('lux.picture.zoom',zoom);}catch{}}
+  const viewport=window.LuxReaderViewport.attach(modal,reader,images,()=>position);
+  let fit='width';
+  function applyZoom(){viewport.set({fit,zoom});zoomTools.querySelector('output').textContent=zoom+'%';zoomTools.querySelector('[data-zoom-out]').disabled=zoom<=50;zoomTools.querySelector('[data-zoom-in]').disabled=zoom>=250;try{localStorage.setItem('lux.picture.zoom',zoom);}catch{}}
   zoomTools.querySelector('[data-zoom-out]').onclick=()=>{zoom=Math.max(50,zoom-10);applyZoom();};
   zoomTools.querySelector('[data-zoom-in]').onclick=()=>{zoom=Math.min(250,zoom+10);applyZoom();};
-  zoomTools.querySelector('[data-zoom-fit]').onclick=()=>{zoom=100;applyZoom();};
+  zoomTools.querySelector('[data-zoom-fit]').onclick=()=>{zoom=100;fit='page';zoomTools.querySelector('[data-reader-fit]').value=fit;applyZoom();viewport.focus();};
+  zoomTools.querySelector('[data-reader-fit]').onchange=event=>{fit=event.target.value;zoom=100;applyZoom();viewport.focus();};
+  const widthButton=modal.querySelector('#readerWidth');if(widthButton)widthButton.onclick=()=>{fit=fit==='width'?'page':'width';zoom=100;zoomTools.querySelector('[data-reader-fit]').value=fit;applyZoom();viewport.focus();};
   applyZoom();
   modal.classList.remove('reader-clean');
   modal.setAttribute('closedby', 'none');
@@ -89,6 +93,7 @@ drawReader = function(book, index) {
     toolbar.querySelector('[data-comfort-prev]').disabled = position === 0;
     toolbar.querySelector('[data-comfort-next]').disabled = position === pages.length - 1;
     preload();
+    viewport.apply();
     savePosition();
   }
   function layout(scrollToPage) {
@@ -152,7 +157,8 @@ drawReader = function(book, index) {
     frame = requestAnimationFrame(() => {
       frame = 0;
       if (!reader.isConnected || restoring) return;
-      const line = modal.getBoundingClientRect().top + modal.clientHeight * .4;
+      const activeHeight=images[position]?.getBoundingClientRect().height||modal.clientHeight;
+      const line = modal.getBoundingClientRect().top + Math.min(modal.clientHeight*.4,Math.max(1,activeHeight*.3));
       let visible = 0;
       for (let i = 0; i < pages.length; i++) {
         if (pages[i].getBoundingClientRect().top > line) break;
@@ -162,6 +168,8 @@ drawReader = function(book, index) {
     });
   };
   const cleanup = () => {
+    viewport.destroy();
+    window.removeEventListener('lux:before-update',savePosition);
     modal.removeEventListener('scroll', scroll);
     modal.removeEventListener('cancel', preventExit);
     modal.removeEventListener('click', gapClick);
@@ -174,7 +182,7 @@ drawReader = function(book, index) {
   observer.observe(modal, { childList: true, attributes: true, attributeFilter: ['open'] });
   modal.addEventListener('scroll', scroll, { passive: true });
   window.addEventListener('lux:before-update',savePosition);
-  modal.addEventListener('close',()=>window.removeEventListener('lux:before-update',savePosition),{once:true});
+
   images.forEach(image => {
     image.loading = 'lazy';
     image.decoding = 'async';
