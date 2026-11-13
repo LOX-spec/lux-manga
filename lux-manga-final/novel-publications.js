@@ -62,23 +62,7 @@ const LuxNovelPublications = (() => {
     return items;
   }
 
-  function seedDatabase() {
-    try {
-      const saved = localStorage.getItem(seedKey);
-      if (saved !== null) {
-        const data = JSON.parse(saved);
-        if (data.version !== 1 || !Array.isArray(data.novels) || !data.novels.every(validBook)) {
-          throw new Error('Invalid sample database');
-        }
-        return data.novels;
-      }
-      localStorage.setItem(seedKey, JSON.stringify({ version: 1, novels: NOVELS_DATA }));
-    } catch {
-      warning = 'تعمل الروايات المرفقة، لكن تعذّر تهيئة التخزين. تحقّق من مساحة المتصفح وإذن حفظ البيانات.';
-    }
-    return NOVELS_DATA;
-  }
-
+  function seedDatabase(){return [];}
   function catalogue() {
     const books = new Map(seedDatabase().map(book => [String(book.id), book]));
     for (const book of records(bookPrefix, validBook)) books.set(String(book.id), book);

@@ -77,12 +77,7 @@ try{if(innerWidth>760&&localStorage.getItem('lux.sidebar.hidden')==='1')document
 const uxGo=go;
 go=function(target){const collapsed=document.body.classList.contains('desktop-collapsed');uxGo(target);if(innerWidth>760)menu(collapsed);};
 function uxWelcome(){show('<section class="ux-welcome"><span class="eyetag">مكتبة لوكس</span><h2>أهلًا بك في عالم القراءة</h2><p>١. اختر المانجا أو الكوميكس أو الروايات من «اكتشف».</p><p>٢. احفظ العمل بالقلب أو زر «اقرأ لاحقًا».</p><p>٣. افتح فصلًا، واضبط القارئ كما تحب.</p><button class="primary" data-ux-close>ابدأ القراءة</button></section>');}
-maybeGuide=function(){
-  let seen=state.guideSeen||state.sourceSetupSeen;
-  try{seen=seen||localStorage.getItem('lux.welcome.seen')==='1';localStorage.setItem('lux.welcome.seen','1');}catch{}
-  state.guideSeen=true;state.sourceSetupSeen=true;void save();
-  if(!seen)uxWelcome();
-};
+maybeGuide=function(){if(typeof showSourceSetup==='function')showSourceSetup();};
 const uxOldNovelHref=novelReaderHref;
 novelReaderHref=function(id,index){const book=get(id);return book?.publicationId?LuxNovelPages.chapterUrl(book.publicationId,book.chapters[index||0]?.number):uxOldNovelHref(id,index);};
 function uxPublicationRecord(id){

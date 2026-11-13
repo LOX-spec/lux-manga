@@ -1,5 +1,5 @@
 /* Install, update and offline services share the existing library and reader. */
-const luxRelease='6.7';
+const luxRelease='6.8';
 let luxAppReady=false;
 let luxRegistration,luxUpdateReady=false,luxReloading=false,luxStorage;
 const luxDownloads=new Map();
@@ -48,6 +48,7 @@ window.addEventListener('offline',()=>{for(const s of state.sites)if(syncing.has
 async function luxStart(requested) {
   await init({ localFirst: ['novels', 'admin'].includes(requested) });
   luxAppReady=true;
+  if(['novels','admin'].includes(requested))maybeGuide();
   for (const site of state.sites) {
     if (site.review?.status === 'running') {
       site.review.status = 'paused';

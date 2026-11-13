@@ -1,3 +1,4 @@
+function hasPublishedRecord(id){try{return !!localStorage.getItem('lux-novel-studio:v1:book:'+id)||Array.from({length:localStorage.length},(_,i)=>localStorage.key(i)).some(k=>k?.startsWith('lux-novel-studio:v1:chapter:'+id+':'));}catch{return true}}
 /* Public-source recovery and local, inert HTML imports. */
 function cleanSourceInput(value) {
   const text = String(value).replace(/&amp;/g, '&').replace(/[\u200b-\u200f\u202a-\u202e]/g, '');
@@ -60,16 +61,4 @@ document.addEventListener('submit', async event => {
     $('#modal').close(); go('sites'); toast('حُفظ المحتوى المستورد؛ افحص الروابط المتاحة من مصادرك.');
   } catch(error) { $('#smartError').textContent = error.message; } finally {button.disabled=false;}
 });
-const smartRender = render;
-render = function() {
- if (state.preferences?.mangaSamplesVersion !== 2) {
-  state.preferences ??= {};
-  const hadSamples=state.books.some(book=>book.siteId==='local-samples');
-  if(hadSamples||!state.books.some(book=>mediaOf(book)==='manga')){
-   for(const sample of LuxMangaSamples.books(location.origin)){const existing=state.books.find(book=>book.id===sample.id);if(existing)Object.assign(existing,sample);else state.books.push(sample);}
-  }
-  state.preferences.mangaSamplesInitialized=true;state.preferences.mangaSamplesVersion=2;
-  save();
- }
- return smartRender();
-};
+const smartRender=render;render=function(){const n=state.books.length;state.books=state.books.filter(b=>b.siteId!=='local-samples'&&!/^sample-manga-/.test(b.id)&&!(b.siteId==='published-local'&&['/ember-oath-cover.svg','/moon-library-cover.svg','/wind-heiress-cover.svg','/glass-castle-cover.svg'].includes(b.cover)&&!hasPublishedRecord(b.publicationId)));if(n!==state.books.length&&db)void save();return smartRender();};

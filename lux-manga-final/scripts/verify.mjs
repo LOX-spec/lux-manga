@@ -84,7 +84,7 @@ assert.equal(comicLibrary.resume(testComics, {'0':{chapter:999}, '1':{chapter:0,
 const duplicate = {...testComics[0],id:'duplicate'};
 assert.equal(comicLibrary.latest([testComics[0], duplicate]).length, 1, 'shared issue links must not repeat in latest releases');
 assert.equal(testComics[0].id, '0', 'sorting should not reorder saved library records');
-assert.equal(samples.length, 4);
+assert.equal(samples.length, 0);
 for (const book of samples) {
   assert.ok(book.chapters.length >= 3);
   assert.match(fs.readFileSync('.' + book.cover, 'utf8'), /<svg/);
@@ -123,8 +123,8 @@ function openStorage(records = new Map(), denyWrites = false) {
 
 const records = new Map();
 let store = openStorage(records);
-assert.equal(store.catalogue().length, 4);
-assert.ok(records.has('lux-novel-studio:seed:v1'));
+assert.equal(store.catalogue().length, 0);
+assert.equal(records.has('lux-novel-studio:seed:v1'),false);
 const fields = { title: 'بحر المصابيح', author: 'مؤلف تجريبي', cover: '/moon-library-cover.svg',
   synopsis: 'قصة اختبار محلية.', genres: 'فانتازيا، مغامرة', status: 'مستمرة' };
 const novel = await store.publishNovel(fields);
@@ -144,13 +144,13 @@ await store.publishChapter({ bookId: novel.id, number: '25.1', editing: '1', rev
   title: 'الضوء بعد التعديل', body: 'النص المعدّل.' });
 await assert.rejects(store.publishChapter({ bookId: novel.id, number: '25.1', editing: '1', revision: '1',
   title: 'نسخة قديمة', body: 'نص' }), /تبويب آخر/);
-const demo = store.catalogue().find(book => book.id === 1);
-await store.publishNovel({ ...fields, id: '1', revision: '0', title: 'عهد الرماد بعد التعديل' });
-assert.equal(store.catalogue().find(book => book.id === 1).chapters.length, demo.chapters.length);
-await assert.rejects(store.publishNovel({ ...fields, id: '1', revision: '0' }), /تبويب آخر/);
+const demo = store.catalogue().find(book => book.id === novel.id);
+await store.publishNovel({ ...fields, id: novel.id, revision: String(demo.revision||0), title: 'عهد الرماد بعد التعديل' });
+assert.equal(store.catalogue().find(book => book.id === novel.id).chapters.length, demo.chapters.length);
+await assert.rejects(store.publishNovel({ ...fields, id: novel.id, revision: String(demo.revision||0) }), /تبويب آخر/);
 await assert.rejects(openStorage(records, true).publishNovel(fields), /تعذّر الحفظ/);
 records.set('lux-novel-studio:v1:book:broken', '{"title":');
-assert.equal(openStorage(records).catalogue().length, 5);
+assert.equal(openStorage(records).catalogue().length, 1);
 records.delete('lux-novel-studio:v1:book:broken');
 
 records.set('lux-sample-progress:v1:' + novel.id, '25.1');
@@ -160,13 +160,13 @@ const backup = JSON.parse(JSON.stringify(store.backup()));
 const restoredRecords = new Map();
 const restored = openStorage(restoredRecords);
 await restored.restoreBackup(backup);
-assert.equal(restored.catalogue().length, 5);
+assert.equal(restored.catalogue().length, 1);
 assert.equal(restored.catalogue().find(book => book.id === novel.id).chapters.length, 2);
 assert.equal(restoredRecords.get('lux-sample-progress:v1:' + novel.id), '25.1');
 assert.equal(JSON.parse(restoredRecords.get('lux-reader-bookmark:v1:' + novel.id)).ratio, 0.5);
 assert.equal(JSON.parse(restoredRecords.get('lux-novel-reader:v1')).width, 50);
 await restored.restoreBackup(backup);
-assert.equal(restored.catalogue().length, 5, 'repeated imports must not duplicate books');
+assert.equal(restored.catalogue().length, 1, 'repeated imports must not duplicate books');
 assert.throws(() => restored.restoreBackup({ ...backup, books: [{ id: 'broken' }] }), /غير صالح/);
 const rollbackRecords = new Map(restoredRecords);
 let writes = 0;
