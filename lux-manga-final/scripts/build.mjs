@@ -6,7 +6,7 @@ import { normalizeRoute } from '../routing.js';
 
 const output = 'public-build';
 const { pages, coverAssets } = buildSamplePages();
-const assetExtensions = new Set(['.html', '.js', '.css', '.svg', '.png', '.webmanifest', '.otf']);
+const assetExtensions = new Set(['.html', '.js', '.css', '.svg', '.png', '.jpg', '.webmanifest', '.otf']);
 const files = readdirSync('.', { withFileTypes: true })
   .filter(entry => entry.isFile() && (assetExtensions.has(extname(entry.name)) || entry.name === 'manifest.json'));
 const fingerprint = createHash('sha256');

@@ -1,0 +1,8 @@
+import fs from 'node:fs';import vm from 'node:vm';import assert from 'node:assert/strict';
+let reduced=false;const animations=[],events={},page={querySelectorAll:()=>[],animate:(frames,options)=>{animations.push({frames,options});return {cancel(){}}}};
+const env={window:{},document:{getElementById:()=>page,body:{classList:{contains:()=>reduced,append(){}}},querySelector:()=>null,addEventListener:(name,fn)=>events[name]=fn},matchMedia:()=>({matches:reduced}),WeakSet,Map,MutationObserver:class{observe(){}},IntersectionObserver:class{observe(){}unobserve(){}},requestAnimationFrame:()=>1,addEventListener(){},innerHeight:800};vm.createContext(env);vm.runInContext(fs.readFileSync('ui-motion.js','utf8'),env);
+env.window.LuxMotion.transition('home','downloads');assert.equal(animations.length,1);assert(animations[0].frames[0].transform.includes('translateX'));assert(animations[0].options.duration>300);
+env.window.LuxMotion.transition('downloads','downloads');assert.equal(animations.length,1);reduced=true;env.window.LuxMotion.transition('downloads','settings');assert.equal(animations.length,1,'reduced motion must suppress page slides');
+const atlas=fs.readFileSync('scene-atlas-v2.jpg');assert(atlas.length<500000);assert.equal(atlas[0],255);assert.equal(atlas[1],216);
+assert(fs.existsSync('public-build/scene-atlas-v2.jpg'));assert(fs.readFileSync('sw.js','utf8').includes("url.pathname === '/scene-atlas-v2.jpg'"));assert(fs.readFileSync('ambient-ui.js','utf8').includes("['cave','منجم التنين"));
+console.log('PASS: navigation slides, reduced-motion suppression, compressed image asset, cave option, static deployment and lazy offline artwork cache.');

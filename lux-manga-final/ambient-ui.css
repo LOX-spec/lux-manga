@@ -42,3 +42,9 @@ html:not([data-ambient="minimal"]) :is(.studio-card,.novel-sample-card,.comic-se
 @media(prefers-reduced-motion:reduce){dialog[open],#page{animation:none!important}.studio button:hover,.studio button:active,.studio .studio-card:hover{transform:none!important}}body.reduce-motion :is(dialog,button,.studio-card){animation:none!important;transition:none!important;transform:none!important}
 
 html:not([data-ambient="minimal"]) :is(.collection-page,.comics-theme,.novels-theme){--accent:var(--scene-accent)!important;--red:var(--scene-accent)!important;--gold:var(--scene-accent)!important}
+
+/* Scene v3: photo depth is intentionally quieter than the readable UI. */
+html:is([data-ambient="sky"],[data-ambient="cave"]) .lux-ambient{opacity:.88}html:not([data-ambient="space"]) .landscape-ready>i{display:none!important;animation:none}html:not([data-ambient="minimal"]) .studio :is(.ux-discover,.primary-hub,.ux-intro,.ux-release,.ux-settings-grid>button){background:color-mix(in srgb,var(--bg-card) 96%,transparent)}
+.lux-morph-indicator{position:fixed;pointer-events:none;height:3px;background:var(--accent);box-shadow:0 0 14px var(--accent-soft);border-radius:8px;transform-origin:left center;z-index:95}.lux-morph-indicator[hidden]{display:none}#page{animation:none!important;overflow:clip}body.studio :is(.studio-card,.comic-series-card,.novel-sample-card){transition:transform .26s cubic-bezier(.2,.7,.2,1),box-shadow .26s ease}body.studio :is(.studio-card,.comic-series-card,.novel-sample-card):active{transform:scale(.985)}@media(prefers-reduced-motion:reduce){.lux-morph-indicator{box-shadow:none}}
+
+html:not([data-theme="light"]) .ux-page-heading{ text-shadow:0 2px 14px #000d }
