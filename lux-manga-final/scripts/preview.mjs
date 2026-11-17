@@ -6,6 +6,7 @@ import { Readable } from 'node:stream';
 import { GET as page, HEAD as pageHead } from '../api/page.js';
 import { POST as source } from '../api/source.js';
 import { GET as image } from '../api/image.js';
+import { GET as officialUpdates } from '../api/official-updates.js';
 import { GET as sourceHealth } from '../api/source-health.js';
 import { GET as comick } from '../api/comick.js';
 import { normalizeRoute } from '../routing.js';
@@ -37,6 +38,7 @@ async function handle(request) {
   }
   if (pathname === '/api/source') return source(request);
   if (pathname === '/api/image') return image(request);
+  if (pathname === '/api/official-updates') return officialUpdates(request);
   if (pathname === '/api/source-health') return sourceHealth(request);
   if (pathname === '/api/comick' && request.method === 'GET') return comick(request);
   if (!['GET', 'HEAD'].includes(request.method)) return new Response('Method not allowed', { status: 405 });

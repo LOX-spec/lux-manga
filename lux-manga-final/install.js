@@ -1,5 +1,5 @@
 /* Install, update and offline services share the existing library and reader. */
-const luxRelease='7.1';
+const luxRelease='7.2';
 let luxAppReady=false;
 let luxRegistration,luxUpdateReady=false,luxReloading=false,luxStorage;
 const luxDownloads=new Map();
