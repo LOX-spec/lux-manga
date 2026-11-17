@@ -55,8 +55,8 @@ drawReader = function(book, index) {
   zoomTools.innerHTML='<button data-zoom-out aria-label="تصغير الصفحة">−</button><output aria-label="نسبة التكبير"></output><button data-zoom-in aria-label="تكبير الصفحة">+</button><button data-zoom-fit>ملاءمة الصفحة</button><select data-reader-fit aria-label="طريقة ملاءمة الصورة"><option value="page">الصفحة كاملة</option><option value="width" selected>ملاءمة العرض</option><option value="height">ملاءمة الارتفاع</option></select><small id="readerViewportStatus" role="status" aria-live="polite"></small>';
   toolbar.append(zoomTools);
   const viewport=window.LuxReaderViewport.attach(modal,reader,images,()=>position);
-  let fit='width';
-  function applyZoom(){viewport.set({fit,zoom});zoomTools.querySelector('output').textContent=zoom+'%';zoomTools.querySelector('[data-zoom-out]').disabled=zoom<=50;zoomTools.querySelector('[data-zoom-in]').disabled=zoom>=250;try{localStorage.setItem('lux.picture.zoom',zoom);}catch{}}
+  let fit='width';try{const saved=localStorage.getItem('lux.picture.fit');if(['page','width','height'].includes(saved))fit=saved;}catch{}zoomTools.querySelector('[data-reader-fit]').value=fit;
+  function applyZoom(){try{localStorage.setItem('lux.picture.fit',fit);}catch{}viewport.set({fit,zoom});zoomTools.querySelector('output').textContent=zoom+'%';zoomTools.querySelector('[data-zoom-out]').disabled=zoom<=50;zoomTools.querySelector('[data-zoom-in]').disabled=zoom>=250;try{localStorage.setItem('lux.picture.zoom',zoom);}catch{}}
   zoomTools.querySelector('[data-zoom-out]').onclick=()=>{zoom=Math.max(50,zoom-10);applyZoom();};
   zoomTools.querySelector('[data-zoom-in]').onclick=()=>{zoom=Math.min(250,zoom+10);applyZoom();};
   zoomTools.querySelector('[data-zoom-fit]').onclick=()=>{zoom=100;fit='page';zoomTools.querySelector('[data-reader-fit]').value=fit;applyZoom();viewport.focus();};
@@ -118,7 +118,7 @@ drawReader = function(book, index) {
   }
   function toggleTools() {
     clean = !clean;
-    modal.classList.toggle('reader-clean', clean);
+    modal.classList.toggle('reader-clean', clean);viewport.apply();
     reveal.hidden = !clean;
   }
   reveal.onclick = toggleTools;
@@ -169,7 +169,7 @@ drawReader = function(book, index) {
   };
   const cleanup = () => {
     viewport.destroy();
-    window.removeEventListener('lux:before-update',savePosition);
+    window.removeEventListener('lux:before-update',savePosition);window.removeEventListener('pagehide',savePosition);document.removeEventListener('visibilitychange',saveWhenHidden);
     modal.removeEventListener('scroll', scroll);
     modal.removeEventListener('cancel', preventExit);
     modal.removeEventListener('click', gapClick);
@@ -181,7 +181,7 @@ drawReader = function(book, index) {
   const observer = new MutationObserver(() => { if (!reader.isConnected || !modal.open) cleanup(); });
   observer.observe(modal, { childList: true, attributes: true, attributeFilter: ['open'] });
   modal.addEventListener('scroll', scroll, { passive: true });
-  window.addEventListener('lux:before-update',savePosition);
+  const saveWhenHidden=()=>{if(document.hidden)savePosition();};window.addEventListener('pagehide',savePosition);document.addEventListener('visibilitychange',saveWhenHidden);window.addEventListener('lux:before-update',savePosition);
 
   images.forEach(image => {
     image.loading = 'lazy';

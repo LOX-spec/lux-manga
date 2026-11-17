@@ -28,7 +28,7 @@ function uxDecorateCards(){
 }
 function uxDiscover(){
  const items=books().filter(b=>visibleLibraryWork(b)&&listOf(b.id)!=='ignored'&&matches(b));
- $('#page').innerHTML='<section class="ux-discover"><h1>مكتبتك، بكل عوالمها.</h1>'+uxSectionTabs()+'<div class="ux-discover-links"><button data-view="sites">إدارة المصادر</button><button data-view="catalog">تصفح أزورا</button></div></section><section><h2>جميع الأعمال</h2><div class="studio-grid">'+items.map(card).join('')+'</div>'+(!items.length?'<p>ابدأ بتصفح أزورا أو أضف مصدرك من إدارة المصادر.</p>':'')+'</section>';
+ $('#page').innerHTML='<section class="ux-discover"><h1>مكتبتك، بكل عوالمها.</h1>'+uxSectionTabs()+'<div class="ux-discover-links"><button data-view="sites">إدارة المصادر</button><button data-view="catalog">تصفح أزورا</button><button data-view="library">مكتبتي</button><button data-view="recommend">توصيات حسب قراءتك</button></div></section><section><h2>جميع الأعمال</h2>'+studioGrid(sortCatalog(items))+''+(!items.length?'<p>ابدأ بتصفح أزورا أو أضف مصدرك من إدارة المصادر.</p>':'')+'</section>';
 }
 renderSettings=function(){
   $('#page').innerHTML=`<header class="ux-page-heading"><h1>الإعدادات</h1><p>خيارات واضحة لتجربة تناسبك. تُطبّق تحديثات الموقع والتطبيق تلقائيًا بعد حفظ بياناتك، دون إعادة التثبيت.</p></header><div class="ux-settings-grid"><button data-ux-panel="appearance">${studioIcon('sun')}<span><b>المظهر وحجم النص</b><small>السمة، الألوان، الخط وحجم النص</small></span>←</button><button data-ux-panel="reader">${studioIcon('reading')}<span><b>القراءة</b><small>عرض الصفحات والتحميل والتنقل</small></span>←</button><button data-view="release">${studioIcon('updates')}<span><b>التحقق من التحديثات</b><small>الإصدار الحالي وآخر إصدار متاح</small></span>←</button><button data-view="getapp">${studioIcon('downloads')}<span><b>تحميل التطبيق</b><small>التثبيت على الجوال والكمبيوتر</small></span>←</button></div><div class="ux-settings-footer"><button data-ux-help>دليل سريع</button><a href="/?view=admin">استوديو الناشر</a><small>لوكس ${luxRelease}</small></div>`;
@@ -67,7 +67,7 @@ render=function(){
     const publishers=$('.comic-publishers');if(publishers)publishers.innerHTML=[['comics','كل الكوميكس'],['dc','DC'],['marvel','مارفل'],['comic-other','ناشرون آخرون']].map(([key,label])=>`<button data-view="${key}" aria-pressed="${view===key}">${label}</button>`).join('');
   }
   if(view==='history')$('#page').insertAdjacentHTML('afterbegin','<div class="ux-history-tabs"><button data-view="history">سجل القراءة</button><button data-view="updates">آخر الفصول</button></div>');
-  uxDecorateCards();
+  uxDecorateCards();studioFixImages();
 };
 menu=function(open){
   if(innerWidth>760){document.body.classList.toggle('desktop-collapsed',open);try{localStorage.setItem('lux.sidebar.hidden',open?'1':'0');}catch{}}

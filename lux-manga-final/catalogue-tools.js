@@ -1,0 +1,2 @@
+/* Pure catalogue selection; rebuild index per snapshot to avoid stale saved records. */
+(()=>{const normalize=value=>String(value||'').normalize('NFKD').replace(/[\u064B-\u065F\u0670\u0640]/g,'').replace(/[أإآ]/g,'ا').replace(/ى/g,'ي').toLowerCase().trim();function select(ids,books,allowed){const index=new Map(books.map(book=>[book.id,book]));return [...new Set(ids)].map(id=>index.get(id)).filter(book=>book&&allowed(book));}window.LuxCatalogue={normalize,select};})();

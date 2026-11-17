@@ -1,5 +1,5 @@
 import { fetchPublic } from './public-fetch.js';
-import { alternatives, challenge } from './source-fallback.js';
+import { challenge } from './source-fallback.js';
 
 const limit = 4 * 1024 * 1024;
 const jsonHeaders = { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' };
@@ -92,20 +92,6 @@ export async function source(request) {
       if (challenge(content)) { const error = new Error('المصدر يعرض صفحة حماية'); error.upstreamStatus = 403; throw error; }
       result.response = new Response(content, {headers: result.response.headers});
     } catch (error) {
-      if (options.feedOnly || ![403,503].includes(error.upstreamStatus)) throw error;
-      const deadline = Date.now() + 24000;
-      for (const candidate of alternatives(input)) {
-        if (Date.now() >= deadline) break;
-        try {
-          const fetched = await remote(candidate.url, 'text/html,application/xml,application/json,text/plain', Math.min(4500, deadline - Date.now()));
-          const content = new TextDecoder().decode(await bytes(fetched.response, fetched.signal));
-          if (challenge(content) || content.length < 80) continue;
-          const type = candidate.method === 'jina' ? 'text/plain' : fetched.response.headers.get('content-type');
-          if (candidate.method === 'jina' && !/https?:\/\/|<html/i.test(content)) continue;
-          return json({url: candidate.method === 'feed' ? candidate.url : input, type, content, method: candidate.method});
-        } catch { /* Try the next public transport, preserving the original failure. */ }
-      }
-      error.message = 'تعذّر الوصول إلى المصدر المحمي. استخدم استيراد HTML أو RSS أو إضافة عمل سريعة.';
       throw error;
     }
     const {response, url, signal} = result;
@@ -130,7 +116,7 @@ export async function source(request) {
       error: error.name === 'TimeoutError' ? 'انتهت مهلة الموقع؛ حاول مرة أخرى.' : error.message || 'تعذر الاتصال بالمصدر',
       upstreamStatus: error.upstreamStatus || 0,
       retryAfter: error.retryAfter || null,
-      temporary: error.name === 'TimeoutError' || [408, 425, 429, 500, 502, 503, 504].includes(error.upstreamStatus)
+      temporary: error.name === 'TimeoutError' || [408, 425, 500, 502, 503, 504].includes(error.upstreamStatus)
     }, 400);
   }
 }
@@ -143,13 +129,7 @@ export async function image(request) {
     let result;
     try {result ??= await remote(input,'image/avif,image/webp,image/png,image/jpeg,image/gif');}
     catch(error){
-      if(![403,503].includes(error.upstreamStatus))throw error;
-      for(const candidate of alternatives(input).filter(route=>['corsproxy','allorigins'].includes(route.method))){
-        try{const next=await remote(candidate.url,'image/avif,image/webp,image/png,image/jpeg,image/gif',4500);
-          if(!/^image\/(avif|webp|png|jpeg|gif)(?:;|$)/.test(next.response.headers.get('content-type')||'')){await next.response.body?.cancel();continue;}result=next;break;
-        }catch{ /* Leave a useful source-link error if all image transports fail. */ }
-      }
-      if(!result)throw error;
+      throw error;
     }
     const type = result.response.headers.get('content-type')?.split(';')[0] || '';
     if (!/^image\/(avif|webp|png|jpeg|gif)$/.test(type)) {
