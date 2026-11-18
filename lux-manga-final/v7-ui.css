@@ -1,5 +1,5 @@
 /* V7: stable layout, quiet scenery, accessible controls. */
-.studio #page{zoom:1!important;transform:none!important;animation:none!important}
+.studio #page{zoom:1!important;animation:none!important}
 .studio{font-size:var(--app-font-size,16px)!important}
 .studio :is(p,button,input,select,textarea,label,li,dd,dt){font-size:calc(var(--app-font-size,16px)*.875)!important}
 .studio :is(small,.note){font-size:calc(var(--app-font-size,16px)*.75)!important}
@@ -35,3 +35,9 @@ html[data-ambient=neon] .lux-ambient{background-image:url('https://images.unspla
 
 /* Readable density at larger text sizes and narrow widths. */
 .studio .studio-card h3{height:auto!important;min-height:2.8em;overflow-wrap:anywhere}.studio .studio-grid{min-width:0}.studio .studio-card{min-width:0}.studio :is(.pagination,.ux-discover-links,.actions){flex-wrap:wrap;gap:8px}.studio :is(button,a,input,select):focus-visible{outline:2px solid var(--accent)!important;outline-offset:3px}.studio .pagination button{min-height:44px}.studio .source-card{overflow-wrap:anywhere}.studio .cover-empty{display:grid;place-items:center;min-height:100%;color:var(--text-primary);background:var(--bg-surface)}@media(max-width:480px){.studio .ux-discover{padding:18px!important}.studio .ux-discover h1{font-size:1.6em!important}.studio .topbar .search{max-width:100%}.studio .ux-discover-links button{flex:1 1 140px}.studio .reader-tools,.studio .comfort-reader-tools{flex-wrap:wrap}.studio .reader-tools select{max-width:100%}}
+
+/* Keep narrow pages centered in vertical mode; earlier webtoon margin:0 was stronger. */
+.studio .manga-reader.reader-sized.webtoon-continuous .manga-page{display:block!important;float:none!important;position:relative;inset:auto;width:100%!important;max-width:none!important;margin:0!important;padding:0!important;direction:ltr}
+.studio .manga-reader.reader-sized.webtoon-continuous .manga-page img{display:block!important;float:none!important;position:static!important;margin-inline:auto!important;margin-block:0!important;flex:none;aspect-ratio:auto;border-radius:0}
+.studio :is(.ux-sections,.visual-kind-tabs,#nav,#mobileNav) button{transition:background-color 180ms ease,color 180ms ease,border-color 180ms ease!important}
+@media(hover:hover){.studio button:not(:disabled):hover{filter:brightness(1.08)}}
