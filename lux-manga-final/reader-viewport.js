@@ -1,9 +1,10 @@
 /* Pure fit geometry and the real document Fullscreen API, shared by picture readers. */
 (()=>{
-function fitDimensions(naturalWidth,naturalHeight,availableWidth,availableHeight,fit='page',zoom=100){
+function fitDimensions(naturalWidth,naturalHeight,availableWidth,availableHeight,fit='page',zoom=100,capWidth=false){
  if(!(naturalWidth>0&&naturalHeight>0&&availableWidth>0&&availableHeight>0))return null;
  const widthScale=availableWidth/naturalWidth,heightScale=availableHeight/naturalHeight;
- const scale=(fit==='width'?widthScale:fit==='height'?heightScale:Math.min(widthScale,heightScale))*Math.max(.1,Math.min(4,zoom/100));
+ let scale=(fit==='width'?widthScale:fit==='height'?heightScale:Math.min(widthScale,heightScale))*Math.max(.1,Math.min(4,zoom/100));
+ if(capWidth)scale=Math.min(scale,widthScale);
  return {width:naturalWidth*scale,height:naturalHeight*scale,scale};
 }
 let pending=null,ownsFullscreen=false;
@@ -28,7 +29,7 @@ function attach(modal,reader,images,getPosition){
   const css=getComputedStyle(modal),width=Math.max(80,modal.clientWidth-parseFloat(css.paddingLeft||0)-parseFloat(css.paddingRight||0)-4);
   let reserved=28;for(const selector of ['.reader-heading','.reader-tools','.comfort-reader-tools','#readerReturnIndex']){const el=modal.querySelector(selector);if(el&&!el.hidden&&getComputedStyle(el).display!=='none')reserved+=el.getBoundingClientRect().height+8;}
   const height=Math.max(120,Math.min(modal.clientHeight,window.visualViewport?.height||innerHeight)-reserved);
-  for(const image of images){const size=fitDimensions(image.naturalWidth,image.naturalHeight,width,height,fit,zoom);if(!size)continue;const pixelWidth=size.width.toFixed(2)+'px',pixelHeight=size.height.toFixed(2)+'px';if(image.style.getPropertyValue?.('--page-render-width')!==pixelWidth)image.style.setProperty('--page-render-width',pixelWidth);if(image.style.getPropertyValue?.('--page-render-height')!==pixelHeight)image.style.setProperty('--page-render-height',pixelHeight);}
+  for(const image of images){const size=fitDimensions(image.naturalWidth,image.naturalHeight,width,height,fit,zoom,!!reader.classList.contains?.('webtoon-continuous'));if(!size)continue;const pixelWidth=size.width.toFixed(2)+'px',pixelHeight=size.height.toFixed(2)+'px';if(image.style.getPropertyValue?.('--page-render-width')!==pixelWidth)image.style.setProperty('--page-render-width',pixelWidth);if(image.style.getPropertyValue?.('--page-render-height')!==pixelHeight)image.style.setProperty('--page-render-height',pixelHeight);}
   reader.dataset.fit=fit;reader.dataset.zoom=String(zoom);reader.dataset.availableWidth=String(Math.round(width));reader.dataset.availableHeight=String(Math.round(height));
  }
  const schedule=()=>{if(!frame)frame=requestAnimationFrame(()=>{frame=0;apply();});};
