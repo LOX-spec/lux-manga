@@ -9,3 +9,5 @@ QA: real Azora chapter The Margrave’s 10th-Class Scoundrel, chapter1 (220 imag
 Mobile navigation between Discover/catalogue/settings worked,24 home cards remained, document width375px within390px viewport, no ambient Canvas and no console errors in tested flow. Viewport override restored. Browser animation timeline inspection was unavailable in the read-only tool; rapid-click cancellation, same-tab, reduced motion and hidden-tab behavior were verified by unit tests. Actual60FPS was not measured.
 
 Build, UX, reader sizing and motion tests passed. No library data migrations or deletions.
+
+Mobile follow-up: moved the return-to-index button into the reader toolbar. Browser geometry confirmed no overlap with the page counter at390px; CSS position is static within the sticky toolbar.

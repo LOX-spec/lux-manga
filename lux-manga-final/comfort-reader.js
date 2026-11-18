@@ -70,6 +70,7 @@ drawReader = function(book, index) {
   exit.classList.remove('close');
   exit.textContent = 'العودة للفهرس';
   exit.setAttribute('aria-label', 'العودة للفهرس');
+  toolbar.prepend(exit);
   const returnToIndex = () => { readerSession = null; detail(book.id); };
   exit.onclick = returnToIndex;
   const reveal = document.createElement('button');
