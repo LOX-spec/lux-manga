@@ -1,26 +1,42 @@
-# LUX8.0 — BYOS candidate (not production-approved)
+# LUX LIBRARY8.0 — BYOS and local reader
 
-## Files
-- reader-local.js: natural sorting, bounded ZIP extraction, URL ownership and PDF loading.
-- byos-ui.js: local file/drop entry points; source-list JSON merge/export; safe RSS/OPDS link catalogue. Files never enter state.books or upload endpoints. PDF bitmap rendering is serialized and requested near visible pages.
-- reader-comfort-plus.js: image-only brightness50–100 and sepia0–45; next4 preloading; exact chapter offset/ratio; auto-scroll5–150px/sec with manual stop and cleanup. Preferences are local.
-- lux-source-bridge.user.js: optional manually installed client script, fixed configurable domain, confirmation and anonymous requests; no server bypass. Not installed or tested against a real external domain.
-- app.js/comfort-reader.js: local blob URLs bypass network proxies; local readers close without looking up a saved book; local PDFs release tasks and URLs on close.
-- install.js: defer automatic application updates while a local file is open.
-- build/SW/manifest: standalone home launch; vendored lazy reader assets fetched at build from exact version/hash and cached after first use. Initial local PDF use needs an online preparation of the libraries.
+## الاستخدام
+من الإعدادات أو إدارة المصادر افتح «ملفاتك ومصادرك». اختر أو اسحب CBZ/ZIP/PDF. الملفات تُحلل داخل المتصفح ولا ترفع إلى الخادم؛ أعد اختيار الملف بعد إعادة فتح الموقع لاستعادة موضعه. حد الملف100MB، و500 صفحة، وحد الأرشيف بعد الفك200MB والصورة20MB.
 
-## Required QA status
-| Test | Status | Evidence / limitation |
-|1 ZIP/PDF/order/cleanup|PARTIAL|Real ZIP extracted1/2/10;3 URLs revoked once. Real PDF3 pages parsed1/2/10 and PDF loading task destroyed. PDF raster rendering and local file-picker/drop flow are NOT browser verified.|
-|2 source JSON|PASS (unit)|Roundtrip, malformed structure/JSON, unsafe URLs rejected before mutation.|
-|3 filters|PASS (unit); browser pending|Actual comfort script in DOM fixture applies brightness.75/sepia.2 to images, leaves toolbar unaffected, reloads persisted values.|
-|4 preload/memory/auto|PASS (unit); browser pending|Actual comfort script marks current+4 eager; saves777px, restores600px, advances auto-scroll and stops on wheel/explicit toggle. Browser layout-dependent restoration still pending.|
-|5 PWA|PARTIAL|Manifest standalone/icons and SW cache paths validated. Actual browser registration/offline runtime not verified in this turn.|
-|6 Console/responsive|BLOCKED|Automatic approval review rejected reading the unrelated existing Chrome Gemini Notebook window. Awaiting permission to open an isolated test window. No0-errors claim or mobile/desktop success claim is made.|
+يمكن تصدير/دمج قوائم المصادر بصيغة {version:1,sources:[{name,url,type}]} حيث النوع manga/comics/novels. الدمج لا يبدأ فحصًا تلقائيًا ولا يستبدل المكتبة. فهارس RSS/OPDS تُعرض كروابط HTTPS آمنة؛ استخراج المحتوى الكامل يعتمد على ما يتيحه المصدر ولا يُضمن لكل موقع.
 
-Automated core application, UX, viewport, updates, archive, source validation and comfort tests passed. Node PDF parser emitted optional canvas/Path2D warnings; it was used for parsing only.
+جسر Userscript اختياري ومنفصل: عدّل example.com في الكود والبيانات الوصفية إلى نطاق المصدر، وثبّته بنفسك في إضافة متوافقة. لا يُثبت تلقائيًا، ولا يستخدم ملفات ارتباط، ولا يتجاوز403/429. لم يُختبر مع مصدر خارجي فعلي؛ اختبارات هذه الحزمة لا تدّعي ذلك.
 
-## Browser QA
-After build run node scripts/prepare-browser-qa.mjs, start a fresh-port preview, then open /byos-qa.html. The harness uses synthetic ZIP/PDF fixtures through the real local file input and the application in390px/1200px iframe widths. It records failures rather than hiding them. This harness has NOT yet been executed in a browser.
+## الملفات الرئيسية
+- reader-local.js: ترتيب طبيعي، تحقق JSON، فك ZIP بحدود ذاكرة، ملكية Object URLs، وPDF.js مع isEvalSupported:false وXFA معطل.
+- byos-ui.js: اختيار/سحب الملفات، رسم PDF تدريجيًا، استيراد/تصدير المصادر وعرض الخلاصات؛ لا تُخزّن ملفات القراءة في state.books ولا في أي API رفع.
+- reader-comfort-plus.js: سطوع50–100 ودفء0–45 على الصور فقط؛ تحميل4 صفحات قادمة؛ موضع دقيق لكل فصل؛ تمرير تلقائي5–150px/s يتوقف عند اللمس/العجلة/لوحة المفاتيح.
+- comfort-reader.js وapp.js: ربط الملفات بنفس القارئ، إغلاق آمن وموارد محلية دون بروكسي، وتعطيل تعليم الملف المحلي في مكتبة المصادر.
+- install.js: تأجيل التحديث أثناء فتح ملف محلي.
+- manifest.json وsw.js: تطبيق standalone وشاشة البداية الرئيسية، كاش الواجهة ومكتبات القراءة عند استخدامها؛ أصول PDF المرافقة تُجلب عند الحاجة. يلزم اتصال أول مرة لتحضير المكتبات؛ ليس ضمانًا لعمل ملف PDF لم تُحمّل متطلباته سابقًا بلا اتصال.
+- scripts/vendor-reader.mjs: JSZip3.10.2 وPDF.js6.5.438 بإصدارات وتواقيع SHA ثابتة، مع الخطوط وCMaps وWASM محليًا. التحميل أثناء البناء، لا تحميل كود من CDN أثناء قراءة ملفك.
 
-Production remains7.6 pending browser QA. No Railway resources, browser solvers or source additions. No library schema migration or user-file uploads.
+## الاختبارات الستة — 23 نوفمبر2026
+| الاختبار | النتيجة | الدليل |
+|---|---|---|
+|1 ZIP/PDF والترتيب والتنظيف|ناجح|ZIP حقيقي بأسماء1/2/10، PDF حقيقي3 صفحات بنص1/2/10، ورسم3 صفحات PDF في Chrome عبر حقل الملفات الفعلي. بعد جولتي PDF وإغلاق ZIP تم تحرير15 Object URL وبقي0 PDF Workers.|
+|2 قوائم المصادر JSON|ناجح برمجيًا|تصدير/إعادة تحليل البنية، رفض JSON تالف والسجلات null والروابط غير الآمنة والأسماء غير النصية دون تعديل البيانات.|
+|3 الفلاتر والحفظ|ناجح|في Chrome ظهرbrightness.75 وsepia.2 على الصور فقط، وبقي شريط الأدوات دون فلتر؛ أُعيد تحميل نافذة الاختبار واستُعيدت التفضيلات.|
+|4 preload والموضع والتمرير|ناجح|الوحدة تختبر الحالية+4 صفحات. المتصفح اختبر تحميل الصفحات التالية، التمرير بسرعة30، الإيقاف بعجلة الفأرة، وإعادة فتح PDF نفسه بانحراف أقل من5px عن موضعه السابق.|
+|5 PWA|ناجح ضمن النطاق|manifest standalone وأيقونات صحيحة؛ تسجيل Service Worker فعلي ونشط داخل Chrome دون أخطاء في المسار المختبر. لم يُثبت التطبيق فعليًا على هاتف، ولم تُحاكَ كل حالات انقطاع الشبكة.|
+|6 Console والتجاوب|ناجح ضمن النطاق|Chrome حقيقي بنافذة وملف متصفح منفصلين، إطارا390px و1200px بلا تجاوز عرض المستند،0 أخطاء JavaScript/console.error ملتقطة في مسار القراءة، و0 طلبات رفع ملفات.|
+
+## إصلاحات اكتشفها الاختبار
+- استخدام PDFDocumentLoadingTask.destroy المناسب للإصدار المثبت.
+- عدم استبدال موضع القراءة بصفر بعد إغلاق dialog؛ الحفظ يتم قبل الإغلاق.
+- تجميع كسور البكسل في التمرير البطيء بدل ضياعها بالتقريب.
+- منع تحديث التطبيق من مقاطعة ملف محلي.
+- تصحيح MIME لصفحة HTML في المعاينة.
+
+## حدود التقرير
+الفحص على ملفات تجريبية وفي Chrome وليس جميع المتصفحات أو هاتف Android فعلي. ملفات PDF المحمية بكلمة مرور أو XFA ليست مدعومة بهذا المسار. ملفاتك لا تُحفظ تلقائيًا لإعادة فتحها؛ يُحفظ موضعها وتفضيلاتك فقط. كود الجسر يحتاج تثبيتًا وإعدادًا يدويين ولم يُشغّل في حسابات المستخدم. Node أظهر تحذيرات canvas اختيارية عند تحليل PDF فقط؛ رسم PDF اختُبر بنجاح في المتصفح.
+
+## إعادة التشغيل
+شغّل npm run build ثم node scripts/prepare-browser-qa.mjs. شغّل المعاينة PORT=4324 عبر node scripts/preview.mjs، ثم node scripts/qa-relay.mjs وافتح http://127.0.0.1:4326/api/byos-qa في ملف متصفح مستقل. العينات مضمّنة في صفحة الاختبار لتجنب اعتراض برامج التنزيل. الاختبار يعمل على بيانات اصطناعية ويكتب آخر تقرير في outputs/browser-qa-latest.json؛ أدوات QA لا تُنشر كوظائف إنتاج.
+
+لا تغييرات في مخطط المكتبة ولا حذف لبيانات المستخدمين. لا Railway ولا أدوات تجاوز أو متصفحات خادمية.

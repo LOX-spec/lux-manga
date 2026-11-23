@@ -1,0 +1,35 @@
+{
+  "results": [
+    {
+      "id": 1,
+      "status": "PASS",
+      "detail": "ZIP3 pages, PDF3 rendered pages and ZIP URL revocation."
+    },
+    {
+      "id": 2,
+      "status": "PASS",
+      "detail": "source JSON roundtrip/corruption rejected."
+    },
+    {
+      "id": 3,
+      "status": "PASS",
+      "detail": "image-only filters, storage and preference restoration after reload."
+    },
+    {
+      "id": 4,
+      "status": "PASS",
+      "detail": "preload, exact restoration, auto/manual stop;15 URLs revoked,0 live PDF workers,0 file uploads."
+    },
+    {
+      "id": 5,
+      "status": "PASS",
+      "detail": "manifest and actual SW registration active."
+    },
+    {
+      "id": 6,
+      "status": "PASS",
+      "detail": "390/1200px document width,0 captured application errors in exercised flow."
+    }
+  ],
+  "errors": []
+}

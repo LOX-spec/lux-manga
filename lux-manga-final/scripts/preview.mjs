@@ -14,8 +14,10 @@ const origin = 'http://127.0.0.1:' + port;
 const root = resolve('public-build');
 const contentTypes = {
   '.css': 'text/css; charset=utf-8',
+  '.html':'text/html; charset=utf-8',
   '.js': 'text/javascript; charset=utf-8',
   '.mjs':'text/javascript; charset=utf-8',
+  '.wasm':'application/wasm',
   '.png': 'image/png',
   '.svg': 'image/svg+xml',
   '.webmanifest': 'application/manifest+json',

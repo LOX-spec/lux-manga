@@ -57,7 +57,8 @@ function refreshExternalFeed(site) {
   const run = (async () => {
     const base = site.url;
     const paths = ['/wp-json/wp/v2/manga?per_page=30&_embed=1', '/wp-json/', '/feed/'];
-    const data = await Promise.all(paths.map(path => fetchPublicFeed(new URL(path, base), site.useFeedProxy).catch(() => null)));
+    const directFeed=new URL(base).pathname!=='/'?await fetchPublicFeed(base,false).catch(()=>null):null;
+    const data = directFeed?[null,null,directFeed]:await Promise.all(paths.map(path => fetchPublicFeed(new URL(path, base), site.useFeedProxy).catch(() => null)));
     let routes = [];
     try {
       routes = Object.keys(JSON.parse(data[1]?.content).routes || {}).filter(route =>

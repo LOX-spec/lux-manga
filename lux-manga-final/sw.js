@@ -94,7 +94,7 @@ self.addEventListener('fetch', event => {
     }
     return;
   }
-  if(['/vendor-jszip.js','/vendor-pdf.mjs','/vendor-pdf.worker.mjs'].includes(url.pathname)){event.respondWith((async()=>{const cache=await caches.open(SHELL),saved=await cache.match(url.pathname);if(saved)return saved;const r=await fetch(event.request);if(r.ok)await cache.put(url.pathname,r.clone());return r;})());return;}
+  if(url.pathname.startsWith('/vendor-pdf-assets/')||['/vendor-jszip.js','/vendor-pdf.mjs','/vendor-pdf.worker.mjs'].includes(url.pathname)){event.respondWith((async()=>{const cache=await caches.open(SHELL),saved=await cache.match(url.pathname);if(saved)return saved;const r=await fetch(event.request);if(r.ok)await cache.put(url.pathname,r.clone());return r;})());return;}
   const novelView = novelPageView(url);
   if (novelView) {
     const sampleKey = samplePagePath(url);
