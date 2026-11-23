@@ -5,3 +5,8 @@ node_modules/
 *.p12
 *.jks
 *.keystore
+
+# Verified reader dependencies are generated during build.
+vendor-jszip.js
+vendor-pdf.mjs
+vendor-pdf.worker.mjs

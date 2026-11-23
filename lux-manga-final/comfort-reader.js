@@ -72,7 +72,7 @@ drawReader = function(book, index) {
   exit.textContent = 'العودة للفهرس';
   exit.setAttribute('aria-label', 'العودة للفهرس');
   toolbar.prepend(exit);
-  const returnToIndex = () => { readerSession = null; detail(book.id); };
+  const returnToIndex = () => { readerSession = null; if(book.localFile)modal.close();else detail(book.id); };
   exit.onclick = returnToIndex;
   const reveal = document.createElement('button');
   reveal.className = 'reader-reveal';
@@ -86,7 +86,7 @@ drawReader = function(book, index) {
   }
   function preload() {
     for (let i = position; i < Math.min(position + 4, images.length); i++) {
-      images[i].loading = 'eager';
+      images[i].loading = 'eager';book.localSession?.ensure(i,images[i]);
       if (!images[i].getAttribute('src')) images[i].src = urls[i];
     }
   }

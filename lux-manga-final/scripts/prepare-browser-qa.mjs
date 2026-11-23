@@ -1,0 +1,1 @@
+import './verify-byos.mjs';import './verify-pdf.mjs';import fs from 'node:fs';for(const[from,to]of [['scripts/byos-browser-qa.html','public-build/byos-qa.html'],['outputs/test-reader.cbz','public-build/test-reader.cbz'],['outputs/test-reader.pdf','public-build/test-reader.pdf']])fs.copyFileSync(from,to);console.log('Open /byos-qa.html on a fresh local preview origin.');

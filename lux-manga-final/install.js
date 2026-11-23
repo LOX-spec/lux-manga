@@ -1,5 +1,5 @@
 /* Install, update and offline services share the existing library and reader. */
-const luxRelease='7.6';
+const luxRelease='8.0';
 let luxAppReady=false;
 let luxRegistration,luxUpdateReady=false,luxReloading=false,luxStorage;
 const luxDownloads=new Map();
@@ -24,7 +24,7 @@ async function luxReadStorage(){try{if(!navigator.storage?.estimate)return;const
 function luxUpdateBanner(){if(luxUpdateReady)void window.LuxAutoUpdate?.apply();}
 async function luxSetupWorker(){
   const updater=window.LuxAutoUpdate;if(!updater)return;
-  updater.configure({ready:()=>luxAppReady,busy:()=>!!(syncing.size||siteAuditRunning.size||luxDownloads.size),save:async()=>{
+  updater.configure({ready:()=>luxAppReady,busy:()=>!!(window.LuxLocalFileBusy||syncing.size||siteAuditRunning.size||luxDownloads.size),save:async()=>{
     if(!await save())return false;
     try{if(readerSession&&$('#modal')?.classList.contains('reader-modal'))sessionStorage.setItem('lux.update.reader',JSON.stringify({id:readerSession.id,ch:readerSession.ch}));}catch{}
     return true;
